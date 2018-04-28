@@ -1,0 +1,20 @@
+{
+  "name": "dev",
+  "version": "1.0.0",
+  "description": "Proces import export node.js application",
+  "main": "",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "",
+  "devDependencies": {
+    "@types/node": "^9.6.2",
+    "typescript": "^2.8.1"
+  },
+  "dependencies": {
+    "node": "^10.0.0",
+    "vso-node-api": "^99.99.99"
+  }
+}

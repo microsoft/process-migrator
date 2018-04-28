@@ -1,0 +1,14 @@
+{
+    "sourceAccountUrl": "<Source account url>",
+    "sourceAccountToken": "<Source account PAT>",
+    "targetAccountUrl": "<Target account url>",
+    "targetAccountToken": "<Target account PAT>",
+    "options" : {
+        "sourceProcessName": "<SourceProcessName>",
+        "targetProcessName": "<Optional, set as empty string to use source process name>",
+        "writeToFile": true,
+        "onlineReImport": true,
+        "overwritePicklist": true,
+        "__cleanupTargetAccount": true
+    }
+}
