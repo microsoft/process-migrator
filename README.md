@@ -1,14 +1,30 @@
+# Introduction
 
-# Contributing
+The Process Import/Export (PIE) feature provides users with a way to automate the [Process](https://docs.microsoft.com/en-us/vsts/work/customize/process/manage-process?view=vsts) replication across accounts through a Node.js command line interface.
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.microsoft.com.
+The tool gives user option to export a Process from an account, and save it locally, and/or to do an online re-import into another account.
 
-When you submit a pull request, a CLA-bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+  
+# Getting Started
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+**1. Prerequisite**
+
+- Install [npm](https://www.npmjs.com/get-npm)
+- From repository root, run `npm install` 
+  
+**2. Build**
+
+- In root directory of repository, run `npm run build`
+
+**3. Run**
+
+- Set up `configuration.json`
+	- Configure account url and credentials. Source account is required; target account credentials required only if doing online re-import.
+	- `"sourceProcessName"` name of the Process on the source account to export.
+	- `"targetProcessName"` optional new name to give to Process in the target account.
+	-  `"writeToFile"` serialize exported Process to file (not mutually exclusive with onlineReImport)
+	- `"onlineReImport"` whether exported Process should be imported into specified target account.
+	- `"overwritePicklist"` property that specifies which to keep if there is a conflict (by refName) between the picklists on source and target.
+
+- Launch application `node ./build/ImportExportProcess.js` on root directory of repository.
