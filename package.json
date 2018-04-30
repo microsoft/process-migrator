@@ -1,20 +1,47 @@
 {
-  "name": "dev",
-  "version": "1.0.0",
-  "description": "Proces import export node.js application",
+  "name": "process-migrator",
+  "version": "0.9.4",
+  "description": "Proces import/export Node.js application",
   "main": "",
-  "scripts": {
-    "build": "tsc -p tsconfig.json"
+  "bin": {
+    "process-migrator": "build/nodejs/nodejs/main.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "",
+  "engines": {
+    "node": ">=8.11.2"
+  },
+  "scripts": {
+    "build": "tsc -p src/nodejs/tsconfig.json && tsc -p src/browser/tsconfig.json",
+    "bn": "tsc -p src/nodejs/tsconfig.json",
+    "bb": "tsc -p src/browser/tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/process-migrator"
+  },
+  "keywords": [
+    "vsts",
+    "process",
+    "import",
+    "export",
+    "migrate",
+    "migrator",
+    "inherited"
+  ],
+  "author": "Microsoft",
+  "license": "MIT",
   "devDependencies": {
-    "@types/node": "^9.6.2",
+    "@types/minimist": "^1.2.0",
+    "@types/mkdirp": "^0.5.2",
+    "@types/node": "^8.10.15",
     "typescript": "^2.8.1"
   },
   "dependencies": {
-    "node": "^10.0.0",
-    "vso-node-api": "^99.99.99"
+    "guid-typescript": "^1.0.7",
+    "jsonc-parser": "^2.0.0",
+    "minimist": "^1.2.0",
+    "mkdirp": "^0.5.1",
+    "url": "^0.11.0",
+    "vso-node-api": "^6.5.0",
+    "vss-web-extension-sdk": "^5.131.0"
   }
 }

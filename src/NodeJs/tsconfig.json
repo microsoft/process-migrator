@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "outDir": "../../build/NodeJs",
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "target": "es2017", // to not transpile async/await, 
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "skipLibCheck": true, // to allow requirejs live together with node
+  },
+  "include": [
+    "**/*.ts",
+    "../common/**/*.ts",
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

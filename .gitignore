@@ -1,7 +1,3 @@
 node_modules/*
 output/*
-processPayload.json
-process/*.json
-src/*.js
-src/*.js.map
 build/*

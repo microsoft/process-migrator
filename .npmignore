@@ -1,0 +1,5 @@
+src/
+output/
+.vscode/
+build/browser/
+build/tests/

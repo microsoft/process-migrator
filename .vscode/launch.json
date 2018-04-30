@@ -4,9 +4,11 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch process import ",
-            "program": "${workspaceFolder}/build/ImportExportProcess.js",
-            "sourceMaps": true
+            "name": "Launch process migrate",
+            "program": "${workspaceFolder}/build/nodejs/nodejs/main.js",
+            "sourceMaps": true,
+            "args": [
+            ]
         }
     ]
 }
