@@ -1,30 +1,51 @@
 import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
 import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
 import * as WITInterfaces from "vso-node-api/interfaces/WorkItemTrackingInterfaces";
+import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
+import { IWorkItemTrackingProcessApi as WITProcessApi } from "vso-node-api/WorkItemTrackingProcessApi";
+import { IWorkItemTrackingApi as WITApi } from "vso-node-api/WorkItemTrackingApi";
 
 export enum LogLevel {
-    Error,
-    Warning,
-    Information,
-    Verbose
+    error,
+    warning,
+    information,
+    verbose
+}
+
+export enum Modes {
+    import,
+    export,
+    migrate
 }
 
 export interface IExportOptions {
     processID: string;
-    writeToFile: boolean;
 }
 
-export interface IUserConfigurationOptions {
-    sourceProcessName: string;
+export interface ICommandLineOptions {
+    mode: Modes;
+    overwriteProcessOnTarget: boolean;
+    config: string;
+}
+
+export interface IConfigurationFile {
+    sourceProcessName?: string;
     targetProcessName?: string;
-    outputPath?: string;
-    logfileName?: string;
-    writeToFile?: boolean;
-    onlineReImport?: boolean;
+    sourceAccountUrl?: string;
+    targetAccountUrl?: string;
+    sourceAccountToken?: string;
+    targetAccountToken?: string;
+    options?: IConfigurationOptions;
+}
+
+export interface IConfigurationOptions {
+    logLevel?: string;
+    logFilename?: string;
+    processFilename?: string;
     overwritePicklist?: boolean;
-    logLevel?: LogLevel;
-    __cleanupTargetAccount?: boolean; // TODO: For dev purpose 
-    __cleanupTargetEverything?: boolean; // TODO: For dev purpose 
+    continueOnRuleImportFailure?: boolean;
+    continueOnIdentityDefaultValueFailure?: boolean;
+    skipImportFormContributions?: boolean;
 }
 
 export interface IProcessPayload {
@@ -34,7 +55,7 @@ export interface IProcessPayload {
     workItemTypeFields: IWITypeFields[];
     witFieldPicklists: IWITFieldPicklist[];
     layouts: IWITLayout[];
-    behaviors: WITProcessDefinitionsInterfaces.BehaviorModel[];
+    behaviors: WITProcessInterfaces.WorkItemBehavior[];
     workItemTypeBehaviors: IWITBehaviors[];
     states: IWITStates[];
     rules: IWITRules[];
@@ -94,4 +115,18 @@ export interface IWITFieldPicklist {
 
 export interface IDictionaryStringTo<T> {
     [key: string]: T;
+}
+
+export interface ILogger {
+    logVerbose(message: string);
+    logInfo(message: string);
+    logWarning(message: string);
+    logError(message: string);
+    logException(error: Error);
+}
+
+export interface IRestClients {
+    witApi: WITApi;
+    witProcessApi: WITProcessApi;
+    witProcessDefinitionApi: WITProcessDefinitionApi;
 }

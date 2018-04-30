@@ -3,12 +3,12 @@
     "sourceAccountToken": "<Source account PAT>",
     "targetAccountUrl": "<Target account url>",
     "targetAccountToken": "<Target account PAT>",
-    "options" : {
-        "sourceProcessName": "<SourceProcessName>",
-        "targetProcessName": "<Optional, set as empty string to use source process name>",
-        "writeToFile": true,
-        "onlineReImport": true,
-        "overwritePicklist": true,
-        "__cleanupTargetAccount": true
+    "sourceProcessName": "Process name for export, optional in import only mode, required in export/both mode",
+    "targetProcessName<Optional>": "Set to override process name on import, remove <Optional> from param name",
+    "options": {
+        "processFilename<Optional>": "Set to override default export file name, remove <Optional> from param name",
+        "logLevel<Optional>":"Set to override default log level (Information), remove <Optional> from param name",
+        "logFilename<Optional>":"Set to override default log file name, remove <Optional> from param name",
+        "overwritePicklist": false
     }
 }
