@@ -277,6 +277,37 @@ export class Utility {
         return true;
     }
 
+    /**
+    * Returns a GUID such as xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx.
+    * @return New GUID.(UUID version 4 = xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx)
+    * @notes Code is copied from VSTS guid generator
+    * @notes Disclaimer: This implementation uses non-cryptographic random number generator so absolute uniqueness is not guarantee.
+    */
+   public static newGuid(): string {
+       // c.f. rfc4122 (UUID version 4 = xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx)
+       // "Set the two most significant bits (bits 6 and 7) of the clock_seq_hi_and_reserved to zero and one, respectively"
+       var clockSequenceHi = (128 + Math.floor(Math.random() * 64)).toString(16);
+       return this.oct(8) + "-" + this.oct(4) + "-4" + this.oct(3) + "-" + clockSequenceHi + this.oct(2) + "-" + this.oct(12);
+   }
+
+    /**
+     * Generated non-zero octet sequences for use with GUID generation.
+     *
+     * @param length Length required.
+     * @return Non-Zero hex sequences.
+     */
+    private static oct(length?: number): string {
+        if (!length) {
+            return (Math.floor(Math.random() * 0x10)).toString(16);
+        }
+
+        var result: string = "";
+        for (var i: number = 0; i < length; i++) {
+            result += Utility.oct();
+        }
+
+        return result;
+    }
 
     private static _listener = (str: string, key: readline.Key) => {
         if (key.name.toLocaleLowerCase() === "q") {
@@ -613,7 +644,12 @@ export class ProcessImporter {
         assert(payload.targetAccountInformation && payload.targetAccountInformation.fieldRefNameToPicklistId, "[Unexpected] - targetInformation not properly populated");
 
         const targetFieldToPicklistId = payload.targetAccountInformation.fieldRefNameToPicklistId;
+        const processedFieldRefNames:IDictionaryStringTo<boolean> = {};
         for (const picklistEntry of payload.witFieldPicklists) {
+            if (processedFieldRefNames[picklistEntry.fieldRefName] === true) {
+                continue; // Skip since we already processed the field, it might be referenced by different work item type
+            }
+            
             const targetPicklistId = targetFieldToPicklistId[picklistEntry.fieldRefName];
             if (targetPicklistId && targetPicklistId !== PICKLIST_NO_ACTION) {
                 // Picklist exists but items not match, update items
@@ -644,12 +680,15 @@ export class ProcessImporter {
             }
             else if (!targetPicklistId) {
                 // Target field does not exist we need create picklist to be used when create field.
+                picklistEntry.picklist.name = `picklist_${Utility.newGuid()}`; // Avoid conflict on target
                 const createdPicklist = await this.witProcessDefinitionApi.createList(picklistEntry.picklist);
                 if (!createdPicklist || !createdPicklist.id) {
                     throw new ImportError(`Create picklist for field ${picklistEntry.fieldRefName} was not successful`);
                 }
                 targetFieldToPicklistId[picklistEntry.fieldRefName] = createdPicklist.id;
+                
             }
+            processedFieldRefNames[picklistEntry.fieldRefName] = true;
         }
     }
 
@@ -815,10 +854,9 @@ export class ProcessImporter {
         }
         catch (error) {
             if (error instanceof ValidationError) {
-                console.log("Pre-Import validation failed. No artifacts were copied to the target account.")
+                logger.logError("Pre-Import validation failed. No artifacts were copied to the target account.")
             }
-            //TODO: Handle other errors
-            throw (`Import process error: ${error}`);
+            throw error
         }
     }
 }
