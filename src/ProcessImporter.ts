@@ -37,12 +37,11 @@ export class ProcessImporter {
                 throw new ImportError(`Work item type '${wit.name}' is a system work item type with no modifications, cannot import.`);
             }
             else {
-                logger.logVerbose(`Creating work item type '${wit.name}'`);
-                const createdWorkItemType = await this._witProcessDefinitionApi.createWorkItemType(wit, payload.process.typeId);
+                const createdWorkItemType = await Utility.tryCatchWithKnownError(() => this._witProcessDefinitionApi.createWorkItemType(wit, payload.process.typeId),
+                    () => new ImportError(`Failed to create work item type '${wit.id}, see logs for details.`));
                 if (!createdWorkItemType || createdWorkItemType.id !== wit.id) {
                     throw new ImportError(`Failed to create work item type '${wit.id}', server returned empty or reference name does not match.`);
                 }
-                logger.logVerbose(`Created work item type '${wit.name}'`);
             }
         }
     }
@@ -57,12 +56,12 @@ export class ProcessImporter {
         try {
             fieldsOnTarget = await this._witApi.getFields();
             if (!fieldsOnTarget || fieldsOnTarget.length <= 0) { // most likely 404
-                throw new ImportError("Error getting fields from target account, server returned empty result");
+                throw new ImportError("Failed to get fields from target account, server returned empty result");
             }
         }
         catch (error) {
-            logger.logException(error);
-            throw new ImportError("Error getting fields from target account, see logs for details.")
+            Utility.handleKnownError(error);
+            throw new ImportError("Failed to get fields from target account, see logs for details.")
         }
 
         // Build a lookup to know if a field is picklist field.
@@ -103,46 +102,44 @@ export class ProcessImporter {
         if (fieldsToCreate.length > 0) {
             const createFieldPromises: Promise<any>[] = [];
             for (const field of fieldsToCreate) {
-                field && createFieldPromises.push(this._witProcessDefinitionApi.createField(field, payload.process.typeId).then(fieldCreated => {
+                try {
+                    const fieldCreated = await Engine.Task(() => this._witProcessDefinitionApi.createField(field, payload.process.typeId), `Create field '${field.id}'`);
                     if (!fieldCreated) {
                         throw new ImportError(`Create field '${field.name}' failed, server returned empty object`);
                     }
                     if (fieldCreated.id !== field.id) {
                         throw new ImportError(`Create field '${field.name}' actually returned referenace name '${fieldCreated.id}' instead of anticipated '${field.id}', are you on latest VSTS?`);
                     }
-                }, (error) => {
-                    logger.logException(error)
+
+                }
+                catch (error) {
+                    Utility.handleKnownError(error);
                     throw new ImportError(`Create field '${field.name}' failed, see log for details.`);
-                }));
-            }
-            logger.logInfo(`Started creating fields: ${fieldsToCreate.map(f => f.name).join(",")}`);
-            await Promise.all(createFieldPromises);
-            logger.logInfo(`Completed creating fields successfully.`);
+                }
+            };
         }
     }
 
+
     /**Add fields at a Work Item Type scope*/
     private async _addFieldsToWorkItemTypes(payload: IProcessPayload): Promise<void> {
-        const addFieldsPromises: Promise<any>[] = [];
         for (const entry of payload.workItemTypeFields) {
             for (const field of entry.fields) {
-                // TODO: Disable parallel import due to server concurrency issue we have today.
-                //addFieldsPromises.push(
-                await this._witProcessDefinitionApi.addFieldToWorkItemType(field, payload.process.typeId, entry.workItemTypeRefName).then(
-                    (fieldAdded) => {
-                        if (!fieldAdded || fieldAdded.referenceName !== field.referenceName) {
-                            throw new ImportError(`Failed to add field '${field.referenceName}' to work item type '${entry.workItemTypeRefName}', server returned empty result or reference name does not match.`);
-                        }
-                    },
-                    (error) => {
-                        logger.logException(error);
-                        throw new ImportError(`Failed to add field '${field.referenceName}' to work item type '${entry.workItemTypeRefName}', see logs for details.`);
+                try {
+                    const fieldAdded = await Engine.Task(
+                        () => this._witProcessDefinitionApi.addFieldToWorkItemType(field, payload.process.typeId, entry.workItemTypeRefName),
+                        `Add field '${field.referenceName}' to work item type '${entry.workItemTypeRefName}'`);
+
+                    if (!fieldAdded || fieldAdded.referenceName !== field.referenceName) {
+                        throw new ImportError(`Failed to add field '${field.referenceName}' to work item type '${entry.workItemTypeRefName}', server returned empty result or reference name does not match.`);
                     }
-                )
-                //);
+                }
+                catch (error) {
+                    Utility.handleKnownError(error);
+                    throw new ImportError(`Failed to add field '${field.referenceName}' to work item type '${entry.workItemTypeRefName}', see logs for details.`);
+                }
             }
         }
-        await Promise.all(addFieldsPromises);
     }
 
     private async _createGroup(createGroup: WITProcessDefinitionsInterfaces.Group,
@@ -152,9 +149,10 @@ export class ProcessImporter {
         payload: IProcessPayload
     ) {
         let newGroup: WITProcessDefinitionsInterfaces.Group;
-
         try {
-            newGroup = await this._witProcessDefinitionApi.addGroup(createGroup, payload.process.typeId, witLayout.workItemTypeRefName, page.id, section.id);
+            newGroup = await Engine.Task(
+                () => this._witProcessDefinitionApi.addGroup(createGroup, payload.process.typeId, witLayout.workItemTypeRefName, page.id, section.id),
+                `Create group '${createGroup.id}' in page '${page.id}'`);
         }
         catch (error) {
             logger.logException(error);
@@ -176,9 +174,10 @@ export class ProcessImporter {
         payload: IProcessPayload
     ) {
         let newGroup: WITProcessDefinitionsInterfaces.Group;
-
         try {
-            newGroup = await this._witProcessDefinitionApi.editGroup(createGroup, payload.process.typeId, witLayout.workItemTypeRefName, page.id, section.id, group.id);
+            newGroup = await Engine.Task(
+                () => this._witProcessDefinitionApi.editGroup(createGroup, payload.process.typeId, witLayout.workItemTypeRefName, page.id, section.id, group.id),
+                `edit group '${group.id}' in page '${page.id}'`);
         }
         catch (error) {
             logger.logException(error);
@@ -201,8 +200,10 @@ export class ProcessImporter {
         const sourcePagesOnTarget: WITProcessDefinitionsInterfaces.Page[] = targetLayout.pages.filter(p => p.id === page.id);
         try {
             newPage = sourcePagesOnTarget.length === 0
-                ? await this._witProcessDefinitionApi.addPage(createPage, payload.process.typeId, witLayout.workItemTypeRefName)
-                : await this._witProcessDefinitionApi.editPage(createPage, payload.process.typeId, witLayout.workItemTypeRefName);
+                ? await Engine.Task(() => this._witProcessDefinitionApi.addPage(createPage, payload.process.typeId, witLayout.workItemTypeRefName),
+                    `Create '${page.id}' page in ${witLayout.workItemTypeRefName}`)
+                : await Engine.Task(() => this._witProcessDefinitionApi.editPage(createPage, payload.process.typeId, witLayout.workItemTypeRefName),
+                    `Edit '${page.id}' page in ${witLayout.workItemTypeRefName}`);
         }
         catch (error) {
             logger.logException(error);
@@ -219,65 +220,55 @@ export class ProcessImporter {
 
                 if (group.controls.length !== 0 && group.controls[0].controlType === "HtmlFieldControl") {
                     //Handle groups with HTML Controls
-                    try {
-                        const createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
+                    const createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
 
-                        if (group.inherited) {
-                            if (group.overridden) {
-                                newGroup = await this._editGroup(createGroup, page, section, group, witLayout, payload);
+                    if (group.inherited) {
+                        if (group.overridden) {
+                            newGroup = await this._editGroup(createGroup, page, section, group, witLayout, payload);
 
-                                const htmlControl = group.controls[0];
-                                if (htmlControl.overridden) {
-                                    // If the HTML control is overriden, we must update that as well 
-                                    let updatedHtmlControl: WITProcessDefinitionsInterfaces.Control;
-                                    try {
-                                        updatedHtmlControl = await this._witProcessDefinitionApi.editControl(htmlControl, payload.process.typeId, witLayout.workItemTypeRefName, newGroup.id, htmlControl.id);
-                                    }
-                                    catch (error) {
-                                        logger.logException(error);
-                                        throw new ImportError(`Failed to edit HTML control '${htmlControl.id} in group'${group.id}' in page '${page.id}', see logs for details.`)
-                                    }
-
-                                    if (!updatedHtmlControl || updatedHtmlControl.id !== htmlControl.id) {
-                                        throw new ImportError(`Failed to edit group '${group.id}' in page '${page.id}', server returned empty result or non-matching id.`)
-                                    }
+                            const htmlControl = group.controls[0];
+                            if (htmlControl.overridden) {
+                                // If the HTML control is overriden, we must update that as well 
+                                let updatedHtmlControl: WITProcessDefinitionsInterfaces.Control;
+                                try {
+                                    updatedHtmlControl = await Engine.Task(
+                                        () => this._witProcessDefinitionApi.editControl(htmlControl, payload.process.typeId, witLayout.workItemTypeRefName, newGroup.id, htmlControl.id),
+                                        `Edit HTML control '${htmlControl.id} in group'${group.id}' in page '${page.id}'`);
                                 }
-                            }
-                            else {
-                                // no-op since the group is not overriden
+                                catch (error) {
+                                    logger.logException(error);
+                                    throw new ImportError(`Failed to edit HTML control '${htmlControl.id} in group'${group.id}' in page '${page.id}', see logs for details.`)
+                                }
+
+                                if (!updatedHtmlControl || updatedHtmlControl.id !== htmlControl.id) {
+                                    throw new ImportError(`Failed to edit group '${group.id}' in page '${page.id}', server returned empty result or non-matching id.`)
+                                }
                             }
                         }
                         else {
-                            // special handling for HTML control - we must create a group containing the HTML control at same time.
-                            createGroup.controls = group.controls;
-                            await this._createGroup(createGroup, page, section, witLayout, payload);
+                            // no-op since the group is not overriden
                         }
                     }
-                    catch (error) {
-                        Utility.handleKnownError(error);
-                        throw new ImportError(`Unable to add ${group} HTML group to ${witLayout.workItemTypeRefName}, see logs for details.`);
+                    else {
+                        // special handling for HTML control - we must create a group containing the HTML control at same time.
+                        createGroup.controls = group.controls;
+                        await this._createGroup(createGroup, page, section, witLayout, payload);
                     }
                 }
                 else {
                     //Groups with no HTML Controls
-                    try {
-                        let createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
+                    let createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
 
-                        if (group.inherited) {
-                            if (group.overridden) {
-                                //edit
-                                await this._editGroup(createGroup, page, section, group, witLayout, payload);
-                            }
-                        }
-                        else {
-                            //create
-                            newGroup = await this._createGroup(createGroup, page, section, witLayout, payload);
-                            group.id = newGroup.id;
+                    if (group.inherited) {
+                        if (group.overridden) {
+                            //edit
+                            await this._editGroup(createGroup, page, section, group, witLayout, payload);
                         }
                     }
-                    catch (error) {
-                        Utility.handleKnownError(error);
-                        throw new ImportError(`Unable to add ${group} group to ${witLayout.workItemTypeRefName}. ${error}`);
+                    else {
+                        //create
+                        newGroup = await this._createGroup(createGroup, page, section, witLayout, payload);
+                        group.id = newGroup.id;
                     }
 
                     for (const control of group.controls) {
@@ -312,94 +303,90 @@ export class ProcessImporter {
          * HTML controls need to be created at the same tme as the group they are in.
          * Non HTML controls need to be added 1 by 1 after the group they are in has been created.
          */
-        const importPagePromises: Promise<any>[] = [];
-
-        for (const witLayout of payload.layouts) {
-            const targetLayout: WITProcessDefinitionsInterfaces.FormLayout = await this._witProcessDefinitionApi.getFormLayout(payload.process.typeId, witLayout.workItemTypeRefName);
-            for (const page of witLayout.layout.pages) {
-                //TODO: Disable parallel execution, we have server concurrency bug today not handling that well. 
-                // if (page.pageType === WITProcessDefinitionsInterfaces.PageType.Custom) {
-                //     importPagePromises.push(this.importPage(targetLayout, witLayout, page, payload).then(() => { return; }, (error) => {
-                //         Utility.handleKnownError(error);
-                //         throw new ImportError(`Failed to import page '${page.id}' in work item type '${witLayout.workItemTypeRefName}'`);
-                //     }));
-                // }
-                await this._importPage(targetLayout, witLayout, page, payload);
+        for (const witLayoutEntry of payload.layouts) {
+            const targetLayout: WITProcessDefinitionsInterfaces.FormLayout = await Engine.Task(
+                () => this._witProcessDefinitionApi.getFormLayout(payload.process.typeId, witLayoutEntry.workItemTypeRefName),
+                `Get layout on target process for work item type '${witLayoutEntry.workItemTypeRefName}'`);
+            for (const page of witLayoutEntry.layout.pages) {
+                await this._importPage(targetLayout, witLayoutEntry, page, payload);
             }
         }
-
-        await Promise.all(importPagePromises);
     }
 
-    private async _importWITStates(entry: IWITStates, payload: IProcessPayload) {
+    private async _importWITStates(witStateEntry: IWITStates, payload: IProcessPayload) {
         let targetWITStates: WITProcessDefinitionsInterfaces.WorkItemStateResultModel[];
         try {
-            targetWITStates = await this._witProcessApi.getStateDefinitions(payload.process.typeId, entry.workItemTypeRefName);
+            targetWITStates = await Engine.Task(
+                () => this._witProcessApi.getStateDefinitions(payload.process.typeId, witStateEntry.workItemTypeRefName),
+                `Get states on target process for work item type '${witStateEntry.workItemTypeRefName}'`);
             if (!targetWITStates || targetWITStates.length <= 0) {
-                throw new ImportError(`Failed to get states definitions from work item type '${entry.workItemTypeRefName}' on target account, server returned empty result.`)
+                throw new ImportError(`Failed to get states definitions from work item type '${witStateEntry.workItemTypeRefName}' on target account, server returned empty result.`)
             }
         }
         catch (error) {
             Utility.handleKnownError(error);
-            throw new ImportError(`Failed to get states definitions from work item type '${entry.workItemTypeRefName}' on target account, see logs for details.`)
+            throw new ImportError(`Failed to get states definitions from work item type '${witStateEntry.workItemTypeRefName}' on target account, see logs for details.`)
         }
 
-        for (const sourceState of entry.states) {
+        for (const sourceState of witStateEntry.states) {
             try {
                 const existingStates: WITProcessDefinitionsInterfaces.WorkItemStateResultModel[] = targetWITStates.filter(targetState => sourceState.name === targetState.name);
                 if (existingStates.length === 0) {  //does not exist on target
-                    const createdState = await this._witProcessDefinitionApi.createStateDefinition(sourceState, payload.process.typeId, entry.workItemTypeRefName);
+                    const createdState = await Engine.Task(
+                        () => this._witProcessDefinitionApi.createStateDefinition(sourceState, payload.process.typeId, witStateEntry.workItemTypeRefName),
+                        `Create state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
                     if (!createdState || !createdState.id) {
-                        throw new ImportError(`Unable to create state '${sourceState.name}' in '${entry.workItemTypeRefName}' work item type, server returned empty result or id.`);
+                        throw new ImportError(`Unable to create state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, server returned empty result or id.`);
                     }
                 }
                 else {
                     if (sourceState.hidden) { // if state exists on target, only update if hidden 
-                        const updatedState = await this._witProcessDefinitionApi.hideStateDefinition({ hidden: true }, payload.process.typeId, entry.workItemTypeRefName, existingStates[0].id);
+                        const updatedState = await Engine.Task(
+                            () => this._witProcessDefinitionApi.hideStateDefinition({ hidden: true }, payload.process.typeId, witStateEntry.workItemTypeRefName, existingStates[0].id),
+                            `Hide state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
                         if (!updatedState || updatedState.id !== sourceState.id || !updatedState.hidden) {
-                            throw new ImportError(`Unable to hide state '${sourceState.name}' in '${entry.workItemTypeRefName}' work item type, server returned empty result, id or state is not hidden.`);
+                            throw new ImportError(`Unable to hide state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, server returned empty result, id or state is not hidden.`);
                         }
                     }
                 }
             }
             catch (error) {
                 Utility.handleKnownError(error);
-                throw new ImportError(`Unable to create/hide state '${sourceState.name}' in '${entry.workItemTypeRefName}' work item type, see logs for details`);
+                throw new ImportError(`Unable to create/hide state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, see logs for details`);
             }
         }
     }
 
     private async _importStates(payload: IProcessPayload): Promise<void> {
-        const statesPromises: Promise<any>[] = [];
-        for (const entry of payload.states) {
-            statesPromises.push(this._importWITStates(entry, payload));
+        for (const witStateEntry of payload.states) {
+            await this._importWITStates(witStateEntry, payload);
         }
-        await Promise.all(statesPromises);
     }
 
-    private async _importWITRule(rule: WITProcessInterfaces.FieldRuleModel, entry: IWITRules, payload: IProcessPayload) {
+    private async _importWITRule(rule: WITProcessInterfaces.FieldRuleModel, witRulesEntry: IWITRules, payload: IProcessPayload) {
         try {
-            const createdRule = await this._witProcessApi.addWorkItemTypeRule(rule, payload.process.typeId, entry.workItemTypeRefName);
+            const createdRule = await Engine.Task(
+                () => this._witProcessApi.addWorkItemTypeRule(rule, payload.process.typeId, witRulesEntry.workItemTypeRefName),
+                `Create rule '${rule.id}' in work item type '${witRulesEntry.workItemTypeRefName}'`);
+
             if (!createdRule || !createdRule.id) {
-                throw new ImportError(`Unable to create rule '${rule.id}' in work item type '${entry.workItemTypeRefName}', server returned empty result or id.`);
+                throw new ImportError(`Unable to create rule '${rule.id}' in work item type '${witRulesEntry.workItemTypeRefName}', server returned empty result or id.`);
             }
         }
         catch (error) {
             Utility.handleKnownError(error);
-            throw new ImportError(`Unable to create rule '${rule.id}' in work item type '${entry.workItemTypeRefName}', see logs for details.`);
+            throw new ImportError(`Unable to create rule '${rule.id}' in work item type '${witRulesEntry.workItemTypeRefName}', see logs for details.`);
         }
     }
 
     private async _importRules(payload: IProcessPayload): Promise<void> {
-        const rulesPromises: Promise<any>[] = [];
-        for (const entry of payload.rules) {
-            for (const rule of entry.rules) {
+        for (const witRulesEntry of payload.rules) {
+            for (const rule of witRulesEntry.rules) {
                 if (!rule.isSystem) {
-                    rulesPromises.push(this._importWITRule(rule, entry, payload));
+                    await this._importWITRule(rule, witRulesEntry, payload);
                 }
             }
         }
-        await Promise.all(rulesPromises);
     }
 
     private async importBehaviors(payload: IProcessPayload): Promise<void> {
@@ -407,29 +394,47 @@ export class ProcessImporter {
             try {
                 if (!behavior.overridden) {
                     const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = Utility.toCreateBehavior(behavior);
-                    this._witProcessDefinitionApi.createBehavior(createBehavior, payload.process.typeId);
+                    const createdBehavior = await Engine.Task(
+                        () => this._witProcessDefinitionApi.createBehavior(createBehavior, payload.process.typeId),
+                        `Create behavior '${behavior.name}'`);
+                    if (!createdBehavior || createdBehavior.id !== behavior.id) {
+                        throw new ImportError(`Failed to create behavior '${behavior.name}', server returned empty result or id does not match.`)
+                    }
                 }
                 else {
                     const replaceBehavior: WITProcessDefinitionsInterfaces.BehaviorReplaceModel = Utility.toReplaceBehavior(behavior);
-                    this._witProcessDefinitionApi.replaceBehavior(replaceBehavior, payload.process.typeId, behavior.id);
+                    const replacedBehavior = await Engine.Task(
+                        () => this._witProcessDefinitionApi.replaceBehavior(replaceBehavior, payload.process.typeId, behavior.id),
+                        `Replace behavior '${behavior.name}'`);
+                    if (!replacedBehavior) {
+                        throw new ImportError(`Failed to create behavior '${behavior.name}', server returned empty result.`)
+                    }
                 }
             }
             catch (error) {
-                throw new ImportError(`Unable to import behavior ${behavior.name}`);
+                logger.logException(error);
+                throw new ImportError(`Failed to import behavior ${behavior.name}, see logs for details.`);
             }
         }
     }
 
     private async _addBehaviorsToWorkItemTypes(payload: IProcessPayload): Promise<void> {
-        for (let IWorkItemTypeBehaviors of payload.workItemTypeBehaviors) {
-            for (let behavior of IWorkItemTypeBehaviors.behaviors) {
+        for (const witBehaviorsEntry of payload.workItemTypeBehaviors) {
+            for (const behavior of witBehaviorsEntry.behaviors) {
                 try {
-                    if (IWorkItemTypeBehaviors.workItemType.workItemTypeClass === WITProcessDefinitionsInterfaces.WorkItemTypeClass.Custom) {
-                        await this._witProcessDefinitionApi.addBehaviorToWorkItemType(behavior, payload.process.typeId, IWorkItemTypeBehaviors.workItemType.refName);
+                    if (witBehaviorsEntry.workItemType.workItemTypeClass === WITProcessDefinitionsInterfaces.WorkItemTypeClass.Custom) {
+                        const addedBehavior = await Engine.Task(
+                            () => this._witProcessDefinitionApi.addBehaviorToWorkItemType(behavior, payload.process.typeId, witBehaviorsEntry.workItemType.refName),
+                            `Add behavior '${behavior.behavior.id}' to work item type '${witBehaviorsEntry.workItemType.refName}'`);
+
+                        if (!addedBehavior || addedBehavior.behavior.id !== behavior.behavior.id) {
+                            throw new ImportError(`Failed to add behavior '${behavior.behavior.id}' to work item type '${witBehaviorsEntry.workItemType.refName}, server returned empty result or id does not match`);
+                        }
                     }
                 }
                 catch (error) {
-                    throw new ImportError(`Unable to add ${behavior.behavior.id} field to ${IWorkItemTypeBehaviors.workItemType.refName} WIT: ${error}`);
+                    Utility.handleKnownError(error);
+                    throw new ImportError(`Failed to add behavior '${behavior.behavior.id}' to work item type '${witBehaviorsEntry.workItemType.refName}', check logs for details.`);
                 }
             }
         }
@@ -452,37 +457,50 @@ export class ProcessImporter {
                 Object.assign(newpicklist, picklistEntry.picklist);
                 newpicklist.id = targetPicklistId;
                 try {
-                    const updatedPicklist = await this._witProcessDefinitionApi.updateList(newpicklist, targetPicklistId);
+                    const updatedPicklist = await Engine.Task(
+                        () => this._witProcessDefinitionApi.updateList(newpicklist, targetPicklistId),
+                        `Update picklist '${targetPicklistId}' for field '${picklistEntry.fieldRefName}'`);
 
                     // validate the updated list matches expectation
                     if (!updatedPicklist || !updatedPicklist.id) {
-                        throw new ImportError(`[Unexpected] Update picklist '${targetPicklistId}' for field '${picklistEntry.fieldRefName}' was not successful, result is emtpy, possibly the picklist does not exist on target collection`);
+                        throw new ImportError(`Update picklist '${targetPicklistId}' for field '${picklistEntry.fieldRefName}' was not successful, result is emtpy, possibly the picklist does not exist on target collection`);
                     }
 
                     if (updatedPicklist.items.length !== picklistEntry.picklist.items.length) {
-                        throw new ImportError(`[Unexpected] Update picklist '${targetPicklistId}' for field '${picklistEntry.fieldRefName}' was not successful, items number does not match.`);
+                        throw new ImportError(`Update picklist '${targetPicklistId}' for field '${picklistEntry.fieldRefName}' was not successful, items number does not match.`);
                     }
 
                     for (const item of updatedPicklist.items) {
                         if (!picklistEntry.picklist.items.some(i => i.value === item.value)) {
-                            throw new ImportError(`[Unexpected] Update picklist '${targetPicklistId}' for field '${picklistEntry.fieldRefName}' was not successful, item '${item.value}' does not match expected`);
+                            throw new ImportError(`Update picklist '${targetPicklistId}' for field '${picklistEntry.fieldRefName}' was not successful, item '${item.value}' does not match expected`);
                         }
                     }
                 }
-                catch (err) {
-                    throw new ImportError(`Error when update picklist '${targetPicklistId} for field '${picklistEntry.fieldRefName}', server error message: '${err.message}'`);
+                catch (error) {
+                    Utility.handleKnownError(error);
+                    throw new ImportError(`Failed to update picklist '${targetPicklistId} for field '${picklistEntry.fieldRefName}', check logs for details.`);
                 }
             }
             else if (!targetPicklistId) {
                 // Target field does not exist we need create picklist to be used when create field.
                 picklistEntry.picklist.name = `picklist_${Guid.create()}`; // Avoid conflict on target
-                const createdPicklist = await this._witProcessDefinitionApi.createList(picklistEntry.picklist);
-                if (!createdPicklist || !createdPicklist.id) {
-                    throw new ImportError(`Create picklist for field ${picklistEntry.fieldRefName} was not successful`);
-                }
-                targetFieldToPicklistId[picklistEntry.fieldRefName] = createdPicklist.id;
+                try {
+                    const createdPicklist = await Engine.Task(
+                        () => this._witProcessDefinitionApi.createList(picklistEntry.picklist),
+                        `Create picklist for field ${picklistEntry.fieldRefName}`);
 
+                    if (!createdPicklist || !createdPicklist.id) {
+                        throw new ImportError(`Failed to create picklist for field ${picklistEntry.fieldRefName}, server returned empty result or id.`);
+                    }
+
+                    targetFieldToPicklistId[picklistEntry.fieldRefName] = createdPicklist.id;
+                }
+                catch (error) {
+                    Utility.handleKnownError(error);
+                    throw new ImportError(`Failed to create picklist for field ${picklistEntry.fieldRefName}, see logs for details.`);
+                }
             }
+
             processedFieldRefNames[picklistEntry.fieldRefName] = true;
         }
     }
@@ -500,32 +518,35 @@ export class ProcessImporter {
     }
 
     private async _validateProcess(payload: IProcessPayload): Promise<void> {
-        let targetProcesses: WITProcessInterfaces.ProcessModel[];
-        try {
-            targetProcesses = await this._witProcessApi.getProcesses();
-        }
-        catch (error) {
-            throw new ValidationError("Failed to get processes on target acccount, check account url, token and token permission");
-        }
+        const targetProcesses: WITProcessInterfaces.ProcessModel[] =
+            await Utility.tryCatchWithKnownError(async () => {
+                return await Engine.Task(() => this._witProcessApi.getProcesses(), `Get processes on target account`);
+            }, () => new ValidationError("Failed to get processes on target acccount, check account url, token and token permission."));
 
         if (!targetProcesses) { // most likely 404
-            throw new ValidationError("Failed to get processes on target acccount, check account url");
+            throw new ValidationError("Failed to get processes on target acccount, check account url.");
         }
 
         for (const process of targetProcesses) {
             if (payload.process.name.toLowerCase() === process.name.toLowerCase()) {
-                throw new ValidationError("Process with same name or reference name already exists on target account.");
+                throw new ValidationError("Process with same name already exists on target account.");
             }
         }
     }
 
     private async _validateFields(payload: IProcessPayload): Promise<void> {
-        const currentFieldsOnTarget: WITInterfaces.WorkItemField[] = await this._witApi.getFields();
+        const currentFieldsOnTarget: WITInterfaces.WorkItemField[] =
+            await Utility.tryCatchWithKnownError(async () => {
+                return await Engine.Task(
+                    () => this._witApi.getFields(),
+                    `Get fields on target account`);
+            }, () => new ValidationError("Failed to get fields on target account."));
+
         if (!currentFieldsOnTarget) { // most likely 404
             throw new ValidationError("Failed to get fields on target account.")
         }
-        payload.targetAccountInformation.collectionFields = currentFieldsOnTarget;
 
+        payload.targetAccountInformation.collectionFields = currentFieldsOnTarget;
         for (const sourceField of payload.fields) {
             const convertedSrcFieldType: number = Utility.WITProcessToWITFieldType(sourceField.type, sourceField.isIdentity);
             const conflictingFields: WITInterfaces.WorkItemField[] = currentFieldsOnTarget.filter(targetField =>
@@ -541,12 +562,14 @@ export class ProcessImporter {
 
     private async _populatePicklistDictionary(fields: WITInterfaces.WorkItemField[]): Promise<IDictionaryStringTo<WITProcessDefinitionsInterfaces.PickListModel>> {
         const ret: IDictionaryStringTo<WITProcessDefinitionsInterfaces.PickListModel> = {};
+        const promises: Promise<any>[] = [];
         for (const field of fields) {
             assert(field.isPicklist || !field.picklistId, "Non picklist field should not have picklist")
             if (field.isPicklist && field.picklistId) {
-                ret[field.referenceName] = await this._witProcessDefinitionApi.getList(field.picklistId);
+                promises.push(this._witProcessDefinitionApi.getList(field.picklistId).then(list => ret[field.referenceName] = list));
             }
         }
+        await Promise.all(promises);
         return ret;
     }
 
@@ -611,43 +634,46 @@ export class ProcessImporter {
         await Engine.Task(() => this._validatePicklists(payload), "Validate picklists on target account");
     }
 
-    public async importProcess(processPayload: IProcessPayload): Promise<void> {
-        try {
-            await this._getApis();
+    private async _deleteProcessOnTarget(targetProcessName: string) {
+        const processes = await this._witProcessApi.getProcesses();
+        for (const process of processes.filter(p => p.name.toLocaleLowerCase() === targetProcessName.toLocaleLowerCase())) {
+            await Engine.Task(
+                () => this._witProcessApi.deleteProcess(process.typeId),
+                `Delete process '${process.name}' on target account`);
         }
-        catch (error) {
-            logger.logException(error);
-            throw new ImportError(`Failed to connect to target account '${this._config.targetAccountUrl}' - check url and token`);
+    }
+
+    private async _createProcess(payload: IProcessPayload) {
+        const createProcessModel: WITProcessInterfaces.CreateProcessModel = Utility.ProcessModelToCreateProcessModel(payload.process);
+        const createdProcess = await Engine.Task(
+            () => this._witProcessApi.createProcess(createProcessModel),
+            `Create process '${createProcessModel.name}'`);
+        if (!createdProcess) {
+            throw new ImportError(`Failed to create process '${createProcessModel.name}' on target account.`);
         }
+        payload.process.typeId = createdProcess.typeId;
+    }
+
+    public async importProcess(payload: IProcessPayload): Promise<void> {
+        logger.logInfo("Process import started.");
+
+        await Utility.tryCatchWithKnownError(
+            () => this._getApis(),
+            () => new ImportError(`Failed to connect to target account '${this._config.targetAccountUrl}' - check url and token.`));
 
         try {
             if (this._config.targetProcessName) {
-                //TODO: validate process name here right away
-                processPayload.process.name = this._config.targetProcessName;
+                payload.process.name = this._config.targetProcessName;
             }
-            logger.logVerbose("Pre-import validation started.");
-            await Engine.Task(() => this._preImportValidation(processPayload), "Pre-import validation on target account");
-            logger.logVerbose("Pre-import validation completed successfully.");
+
+            await Engine.Task(() => this._preImportValidation(payload), "Pre-import validation on target account");
 
             if (this._commandLineOptions.overwriteProcessOnTarget) {
-                const targetProcessName = this._config.targetProcessName || processPayload.process.name;
-                const processes = await this._witProcessApi.getProcesses();
-                for (const process of processes.filter(p => p.name.toLocaleLowerCase() === targetProcessName.toLocaleLowerCase())) {
-                    logger.logInfo(`Begin delete process '${process.name}' on target account before import.`);
-                    await this._witProcessApi.deleteProcess(process.typeId);
-                    logger.logInfo(`Process '${process.name}' on target account was deleted.`);
-                }
+                await Engine.Task(() => this._deleteProcessOnTarget(payload.process.name), "Delete process (if exist) on target account");
             }
 
-            logger.logVerbose("Create process on target account started.");
-            const createProcessModel: WITProcessInterfaces.CreateProcessModel = Utility.ProcessModelToCreateProcessModel(processPayload.process);
-            const createdProcess = await this._witProcessApi.createProcess(createProcessModel);
-            if (!createdProcess) {
-                throw new ImportError("Failed to create process on target account.");
-            }
-            logger.logVerbose("Create process on target account completed successfully.");
-            processPayload.process.typeId = createdProcess.typeId;
-            await Engine.Task(() => this._createComponents(processPayload), "Create artifacts on target process");
+            await Engine.Task(() => this._createProcess(payload), "Create process on target account");
+            await Engine.Task(() => this._createComponents(payload), "Create artifacts on target process");
         }
         catch (error) {
             if (error instanceof ValidationError) {
@@ -655,5 +681,7 @@ export class ProcessImporter {
             }
             throw error;
         }
+
+        logger.logInfo("Process import completed successfully.");
     }
 }

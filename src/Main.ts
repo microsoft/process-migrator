@@ -1,12 +1,12 @@
-import { readFileSync } from "fs";
-import { defaultEncoding, defaultProcessFilename, paramOverwriteProcessOnTarget } from "./Constants";
-import { CancellationError, KnownError } from "./Errors";
-import { IConfigurationOptions, IImportConfiguration, IProcessPayload, LogLevel, Modes } from "./Interfaces";
-import { logger, InitializeFileLogger } from "./Logger";
+import { existsSync, readFileSync } from "fs";
 import { ProcesCommandLine, ProcessConfigurationFile } from "./ConfigurationProcessor";
-import { Utility } from "./Utilities";
+import { defaultEncoding, defaultProcessFilename } from "./Constants";
+import { ImportError, KnownError } from "./Errors";
+import { IConfigurationOptions, IProcessPayload, LogLevel, Modes } from "./Interfaces";
+import { InitializeFileLogger, logger } from "./Logger";
 import { ProcessExporter } from "./ProcessExporter";
 import { ProcessImporter } from "./ProcessImporter";
+import { Utility } from "./Utilities";
 
 async function main() {
     // Parse command line
@@ -22,7 +22,7 @@ async function main() {
     const mode = commandLineOptions.mode;
     const userOptions = configuration.options as IConfigurationOptions;
     try {
-        
+        // Export
         let processPayload: IProcessPayload;
         if (mode === Modes.export || mode === Modes.both) {
             const sourceWebApi = Utility.getWebApi(configuration.sourceAccountUrl, configuration.sourceAccountToken);
@@ -30,31 +30,31 @@ async function main() {
             processPayload = await exporter.exportProcess();
         }
 
-        //TODO: Remove or formalize this - dev only for now
+        // IMport 
         if (mode === Modes.both || mode === Modes.import) {
-            if (mode === Modes.import) { // Read payload from file;
+            if (mode === Modes.import) { // Read payload from file instead
                 const processFileName = (configuration.options && configuration.options.processFilename) || defaultProcessFilename;
+                if (!existsSync(processFileName)) {
+                    throw new ImportError(`Process payload file '${processFileName}' does not exist.`)
+                }
                 logger.logVerbose(`Start read process payload from '${processFileName}'.`);
                 processPayload = JSON.parse(await readFileSync(processFileName, defaultEncoding));
                 logger.logVerbose(`Complete read process payload.`);
             }
 
             const targetWebApi = Utility.getWebApi(configuration.targetAccountUrl, configuration.targetAccountToken);
-
             const importer: ProcessImporter = new ProcessImporter(targetWebApi, configuration, commandLineOptions);
-            logger.logInfo("Process import started.");
             await importer.importProcess(processPayload);
-            logger.logInfo("Process import completed successfully.");
         }
     }
     catch (error) {
-        logger.logException(error);
         if (error instanceof KnownError) {
             // Known errors, just log error message
             logger.logError(error.message);
         }
         else {
-            logger.logError(`Hit unknown error, check log file for details.`)
+            logger.logException(error);
+            logger.logError(`Encourntered unkonwn error, check log file for details.`)
         }
         process.exit(1);
     }

@@ -177,6 +177,16 @@ export class Utility {
         logger.logException(error);
     }
 
+    public static async tryCatchWithKnownError<T>(action: () => Promise<T> | T, thrower: () => Error): Promise<T> {
+        try {
+            return await action();
+        }
+        catch (error) {
+            Utility.handleKnownError(error);
+            throw thrower();
+        }
+    }
+
     private static _listener = (str: string, key: readline.Key) => {
         if (key.name.toLocaleLowerCase() === "q") {
             logger.logVerbose("Setting isCancelled to true.");

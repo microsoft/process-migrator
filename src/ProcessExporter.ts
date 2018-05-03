@@ -10,45 +10,41 @@ import { ExportError } from "./Errors";
 import { IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITBehaviors, IWITBehaviorsInfo, IWITFieldPicklist, IWITLayout, IWITRules, IWITStates, IWITypeFields } from "./Interfaces";
 import { logger } from "./Logger";
 import { Engine } from "./Engine";
+import { Utility } from "./Utilities";
 
 export class ProcessExporter {
-    private vstsWebApi: vsts.WebApi;
-    private witProcessApi: WITProcessApi;
-    private witProcessDefinitionApi: WITProcessDefinitionApi;
-    private witApi: WITApi;
+    private _vstsWebApi: vsts.WebApi;
+    private _witProcessApi: WITProcessApi;
+    private _witProcessDefinitionApi: WITProcessDefinitionApi;
+    private _witApi: WITApi;
 
-    constructor(vstsWebApi: vsts.WebApi, private config: IConfigurationFile) {
-        this.vstsWebApi = vstsWebApi;
+    constructor(vstsWebApi: vsts.WebApi, private _config: IConfigurationFile) {
+        this._vstsWebApi = vstsWebApi;
     }
 
-    public async getApis() {
-        this.witApi = await this.vstsWebApi.getWorkItemTrackingApi();
-        this.witProcessApi = await this.vstsWebApi.getWorkItemTrackingProcessApi();
-        this.witProcessDefinitionApi = await this.vstsWebApi.getWorkItemTrackingProcessDefinitionApi();
+    private async _getApis() {
+        this._witApi = await this._vstsWebApi.getWorkItemTrackingApi();
+        this._witProcessApi = await this._vstsWebApi.getWorkItemTrackingProcessApi();
+        this._witProcessDefinitionApi = await this._vstsWebApi.getWorkItemTrackingProcessDefinitionApi();
     }
 
-    private async getSourceProcessId(): Promise<string> {
-        let processes: WITProcessInterfaces.ProcessModel[];
-        try {
-            processes = await this.witProcessApi.getProcesses();
-        }
-        catch (error) {
-            logger.logException(error);
-            throw new ExportError(`Error getting processes on source account '${this.config.sourceAccountUrl}, check account url, token and token permission`);
-        }
+    private async _getSourceProcessId(): Promise<string> {
+        const processes = await Utility.tryCatchWithKnownError(() => this._witProcessApi.getProcesses(),
+            () => new ExportError(`Error getting processes on source account '${this._config.sourceAccountUrl}, check account url, token and token permissions.`));
+
         if (!processes) { // most likely 404
-            throw new ExportError("Failed to get processes on source account '${this.configurationOptions.sourceAccountUrl}', check account url");
+            throw new ExportError(`Failed to get processes on source account '${this._config.sourceAccountUrl}', check account url.`);
         }
 
-        const lowerCaseSourceProcessName = this.config.sourceProcessName.toLocaleLowerCase();
+        const lowerCaseSourceProcessName = this._config.sourceProcessName.toLocaleLowerCase();
         const matchProcesses = processes.filter(p => p.name.toLocaleLowerCase() === lowerCaseSourceProcessName);
         if (matchProcesses.length === 0) {
-            throw new ExportError(`Process '${this.config.sourceProcessName}' is not found on source account`);
+            throw new ExportError(`Process '${this._config.sourceProcessName}' is not found on source account.`);
         }
         return matchProcesses[0].typeId;
     }
 
-    private async getComponents(processId: string): Promise<IProcessPayload> {
+    private async _getComponents(processId: string): Promise<IProcessPayload> {
         let _process: WITProcessInterfaces.ProcessModel;
         let _behaviorsCollectionScope: WITProcessDefinitionsInterfaces.BehaviorModel[];
         let _fieldsCollectionScope: WITProcessInterfaces.FieldModel[];
@@ -62,16 +58,16 @@ export class ProcessExporter {
         const _nonSystemWorkItemTypes: WITProcessDefinitionsInterfaces.WorkItemTypeModel[] = [];
         const processPromises: Promise<any>[] = [];
 
-        processPromises.push(this.witProcessApi.getProcessById(processId).then(process => _process = process));
-        processPromises.push(this.witProcessApi.getFields(processId).then(fields => _fieldsCollectionScope = fields));
-        processPromises.push(this.witProcessDefinitionApi.getBehaviors(processId).then(behaviors => _behaviorsCollectionScope = behaviors));
-        processPromises.push(this.witProcessApi.getWorkItemTypes(processId).then(workitemtypes => {
+        processPromises.push(this._witProcessApi.getProcessById(processId).then(process => _process = process));
+        processPromises.push(this._witProcessApi.getFields(processId).then(fields => _fieldsCollectionScope = fields));
+        processPromises.push(this._witProcessDefinitionApi.getBehaviors(processId).then(behaviors => _behaviorsCollectionScope = behaviors));
+        processPromises.push(this._witProcessApi.getWorkItemTypes(processId).then(workitemtypes => {
             const perWitPromises: Promise<any>[] = [];
 
             for (const workitemtype of workitemtypes) {
                 const currentWitPromises: Promise<any>[] = [];
 
-                currentWitPromises.push(this.witProcessDefinitionApi.getBehaviorsForWorkItemType(processId, workitemtype.id).then(behaviors => {
+                currentWitPromises.push(this._witProcessDefinitionApi.getBehaviorsForWorkItemType(processId, workitemtype.id).then(behaviors => {
                     const witBehaviorsInfo: IWITBehaviorsInfo = { refName: workitemtype.id, workItemTypeClass: workitemtype.class };
                     const witBehaviors: IWITBehaviors = {
                         workItemType: witBehaviorsInfo,
@@ -83,7 +79,7 @@ export class ProcessExporter {
                 if (workitemtype.class !== WITProcessInterfaces.WorkItemTypeClass.System) {
                     _nonSystemWorkItemTypes.push(workitemtype);
 
-                    currentWitPromises.push(this.witProcessDefinitionApi.getWorkItemTypeFields(processId, workitemtype.id).then(fields => {
+                    currentWitPromises.push(this._witProcessDefinitionApi.getWorkItemTypeFields(processId, workitemtype.id).then(fields => {
                         const witFields: IWITypeFields = {
                             workItemTypeRefName: workitemtype.id,
                             fields: fields
@@ -94,7 +90,7 @@ export class ProcessExporter {
                         for (const field of fields) {
                             if (field.pickList && !knownPicklists[field.referenceName]) { // Same picklist field may exist in multiple work item types but we only need to export once (At this moment the picklist is still collection-scoped)
                                 knownPicklists[field.pickList.id] = true;
-                                picklistPromises.push(this.witProcessDefinitionApi.getList(field.pickList.id).then(picklist => _picklists.push(
+                                picklistPromises.push(this._witProcessDefinitionApi.getList(field.pickList.id).then(picklist => _picklists.push(
                                     {
                                         workitemtypeRefName: workitemtype.id,
                                         fieldRefName: field.referenceName,
@@ -106,7 +102,7 @@ export class ProcessExporter {
                     }));
 
                     let layoutForm: WITProcessDefinitionsInterfaces.FormLayout;
-                    currentWitPromises.push(this.witProcessDefinitionApi.getFormLayout(processId, workitemtype.id).then(layout => {
+                    currentWitPromises.push(this._witProcessDefinitionApi.getFormLayout(processId, workitemtype.id).then(layout => {
                         const witLayout: IWITLayout = {
                             workItemTypeRefName: workitemtype.id,
                             layout: layout
@@ -114,7 +110,7 @@ export class ProcessExporter {
                         _layouts.push(witLayout);
                     }));
 
-                    currentWitPromises.push(this.witProcessDefinitionApi.getStateDefinitions(processId, workitemtype.id).then(states => {
+                    currentWitPromises.push(this._witProcessDefinitionApi.getStateDefinitions(processId, workitemtype.id).then(states => {
                         const witStates: IWITStates = {
                             workItemTypeRefName: workitemtype.id,
                             states: states
@@ -122,7 +118,7 @@ export class ProcessExporter {
                         _states.push(witStates);
                     }));
 
-                    currentWitPromises.push(this.witProcessApi.getWorkItemTypeRules(processId, workitemtype.id).then(rules => {
+                    currentWitPromises.push(this._witProcessApi.getWorkItemTypeRules(processId, workitemtype.id).then(rules => {
                         const witRules: IWITRules = {
                             workItemTypeRefName: workitemtype.id,
                             rules: rules
@@ -157,26 +153,25 @@ export class ProcessExporter {
         return processPayload;
     }
 
+    private async _writeProcessPayload(exportFilename: string, payload: IProcessPayload) {
+        await writeFileSync(exportFilename, JSON.stringify(payload, null, 2), { flag: "w" });
+    }
+
     public async exportProcess(): Promise<IProcessPayload> {
         logger.logInfo("Export process started.");
-        try {
-            await this.getApis();
-        }
-        catch (error) {
-            logger.logException(error);
-            throw new ExportError(`Failed to connect to source account '${this.config.sourceAccountUrl}' - check url and token`);
-        }
 
-        let processPayload: IProcessPayload;
-        const processId = await this.getSourceProcessId();
-        processPayload = await Engine.Task(() => this.getComponents(processId), "Get artifacts from source process");
+        await Utility.tryCatchWithKnownError(
+            () => this._getApis(),
+            () => new ExportError(`Failed to connect to source account '${this._config.sourceAccountUrl}' - check url and token.`));
 
-        logger.logVerbose("Writing process payload started");
-        const exportFilename = (this.config.options && this.config.options.processFilename) || defaultProcessFilename;
-        await writeFileSync(exportFilename, JSON.stringify(processPayload, null, 2), { flag: "w" });
-        logger.logVerbose("Writing process payload completed successfully.");
+
+        const processId = await Engine.Task(() => this._getSourceProcessId(), "Get source process Id form name");
+        const payload = await Engine.Task(() => this._getComponents(processId), "Get artifacts from source process");
+
+        const exportFilename = (this._config.options && this._config.options.processFilename) || defaultProcessFilename;
+        await Engine.Task(() => this._writeProcessPayload(exportFilename, payload), "Write process payload to file")
 
         logger.logInfo("Export process completed successfully.");
-        return processPayload;
+        return payload;
     }
 }
