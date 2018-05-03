@@ -5,8 +5,12 @@
             "type": "node",
             "request": "launch",
             "name": "Launch process import ",
-            "program": "${workspaceFolder}/build/ImportExportProcess.js",
-            "sourceMaps": true
+            "program": "${workspaceFolder}/build/main.js",
+            "sourceMaps": true,
+            "args": [
+                "--mode=both",
+                "--overwriteProcessOnTarget"
+            ]
         }
     ]
 }

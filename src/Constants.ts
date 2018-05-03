@@ -6,11 +6,6 @@ export const defaultProcessFilename = "processPayload.json";
 export const paramMode = "mode";
 export const paramConfig = "config";
 export const paramOverwriteProcessOnTarget = "overwriteProcessOnTarget";
-export enum Modes {
-    import,
-    export,
-    both
-}
 export const defaultConfiguration =
     {
         "sourceAccountUrl": "<Source account url>",

@@ -9,8 +9,20 @@ export enum LogLevel {
     Verbose
 }
 
+export enum Modes {
+    import,
+    export,
+    both
+}
+
 export interface IExportOptions {
     processID: string;
+}
+
+export interface ICommandLineOptions {
+    mode: Modes;
+    overwriteProcessOnTarget : boolean;
+    config: string;
 }
 
 export interface IConfigurationFile {
@@ -101,4 +113,12 @@ export interface IWITFieldPicklist {
 
 export interface IDictionaryStringTo<T> {
     [key: string]: T;
+}
+
+export interface ILogger {
+    logVerbose(message: string);
+    logInfo(message: string);
+    logWarning(message: string);
+    logError(message: string);
+    logException(error: Error);
 }
