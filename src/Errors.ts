@@ -1,24 +1,35 @@
-export class CancellationError extends Error {
+// NOTE: We need this intermediate class to use 'instanceof'
+export class KnownError extends Error {
+    __proto__: Error;
+    constructor(message?: string) {
+        const trueProto = new.target.prototype;
+        super(message);
+
+        // Alternatively use Object.setPrototypeOf if you have an ES6 environment.
+        this.__proto__ = trueProto;
+    }
+}
+
+export class CancellationError extends KnownError {
     constructor() {
-        super("Process Import/Export cancelled. See log file for details");
+        super("Process import/export cancelled by user input.");
     }
 }
 
-export class ValidationError extends Error {
+export class ValidationError extends KnownError {
     constructor(message: string) {
-        super(`Process Import/Export does not meet the requiements for import. ${message}`);
+        super(`Process import validation failed. ${message}`);
     }
 }
 
-export class ImportError extends Error {
+export class ImportError extends KnownError {
     constructor(message: string) {
-        super(`Import failed. See log file for details. ${message}`);
-        //TODO implement log file of all the artifacts that have been created in the target acccount.
+        super(`Import failed, see log file for details. ${message}`);
     }
 }
 
-export class ExportError extends Error {
+export class ExportError extends KnownError {
     constructor(message: string) {
-        super(`Export failed. ${message}`);
+        super(`Export failed, see log file for details. ${message}`);
     }
 }

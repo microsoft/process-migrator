@@ -14,6 +14,9 @@
     "typescript": "^2.8.1"
   },
   "dependencies": {
+    "@types/minimist": "^1.2.0",
+    "guid-typescript": "^1.0.7",
+    "minimist": "^1.2.0",
     "node": "^10.0.0",
     "vso-node-api": "^99.99.99"
   }

@@ -11,20 +11,27 @@ export enum LogLevel {
 
 export interface IExportOptions {
     processID: string;
-    writeToFile: boolean;
 }
 
-export interface IUserConfigurationOptions {
-    sourceProcessName: string;
+export interface IConfigurationFile {
+    sourceProcessName?: string;
     targetProcessName?: string;
-    outputPath?: string;
-    logfileName?: string;
-    writeToFile?: boolean;
-    onlineReImport?: boolean;
-    overwritePicklist?: boolean;
+    sourceAccountUrl?: string;
+    targetAccountUrl?: string;
+    sourceAccountToken?: string;
+    targetAccountToken?: string;
+    options?: IConfigurationOptions;
+}
+
+export interface IConfigurationOptions {
     logLevel?: LogLevel;
-    __cleanupTargetAccount?: boolean; // TODO: For dev purpose 
-    __cleanupTargetEverything?: boolean; // TODO: For dev purpose 
+    logFilename?: string;
+    processFilename?: string;
+    overwritePicklist?: boolean;
+}
+
+export interface IImportConfiguration extends IConfigurationFile {
+    removeProcessOnTarget?: boolean;
 }
 
 export interface IProcessPayload {
