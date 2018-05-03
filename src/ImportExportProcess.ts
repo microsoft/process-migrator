@@ -358,7 +358,9 @@ export class ProcessImporter {
         const addFieldsPromises: Promise<any>[] = [];
         for (const entry of payload.workItemTypeFields) {
             for (const field of entry.fields) {
-                addFieldsPromises.push(this.witProcessDefinitionApi.addFieldToWorkItemType(field, payload.process.typeId, entry.workItemTypeRefName).then(
+                // TODO: Disable parallel import due to server concurrency issue we have today.
+                //addFieldsPromises.push(
+                await this.witProcessDefinitionApi.addFieldToWorkItemType(field, payload.process.typeId, entry.workItemTypeRefName).then(
                     (fieldAdded) => {
                         if (!fieldAdded || fieldAdded.referenceName !== field.referenceName) {
                             throw new ImportError(`Failed to add field '${field.referenceName}' to work item type '${entry.workItemTypeRefName}', server returned empty result or reference name does not match.`);
@@ -368,13 +370,37 @@ export class ProcessImporter {
                         logger.logException(error);
                         throw new ImportError(`Failed to add field '${field.referenceName}' to work item type '${entry.workItemTypeRefName}', see logs for details.`);
                     }
-                ));
+                )
+                //);
             }
         }
         await Promise.all(addFieldsPromises);
     }
 
     private async createGroup(createGroup: WITProcessDefinitionsInterfaces.Group,
+        page: WITProcessDefinitionsInterfaces.Page,
+        section: WITProcessDefinitionsInterfaces.Section,
+        witLayout: IWITLayout,
+        payload: IProcessPayload
+    ) {
+        let newGroup: WITProcessDefinitionsInterfaces.Group;
+
+        try {
+            newGroup = await this.witProcessDefinitionApi.addGroup(createGroup, payload.process.typeId, witLayout.workItemTypeRefName, page.id, section.id);
+        }
+        catch (error) {
+            logger.logException(error);
+            throw new ImportError(`Failed to create group '${createGroup.id}' in page '${page.id}', see logs for details.`)
+        }
+
+        if (!newGroup || !newGroup.id) {
+            throw new ImportError(`Failed to create group '${createGroup.id}' in page '${page.id}', server returned empty result or non-matching id.`)
+        }
+
+        return newGroup;
+    }
+
+    private async editGroup(createGroup: WITProcessDefinitionsInterfaces.Group,
         page: WITProcessDefinitionsInterfaces.Page,
         section: WITProcessDefinitionsInterfaces.Section,
         group: WITProcessDefinitionsInterfaces.Group,
@@ -392,45 +418,17 @@ export class ProcessImporter {
         }
 
         if (!newGroup || newGroup.id !== group.id) {
-            throw new ImportError(`Failed to edit group '${group.id}' in page '${page.id}', server returned empty result or non-matching id.`)
-        }
-
-        return newGroup;
-    }
-
-    private async editGroup(createGroup: WITProcessDefinitionsInterfaces.Group,
-        page: WITProcessDefinitionsInterfaces.Page,
-        section: WITProcessDefinitionsInterfaces.Section,
-        group: WITProcessDefinitionsInterfaces.Group,
-        witLayout: IWITLayout,
-        payload: IProcessPayload
-    ) {
-        let newGroup: WITProcessDefinitionsInterfaces.Group;
-
-        try {
-            newGroup = await this.witProcessDefinitionApi.addGroup(createGroup, payload.process.typeId, witLayout.workItemTypeRefName, page.id, section.id);
-        }
-        catch (error) {
-            logger.logException(error);
-            throw new ImportError(`Failed to create group '${group.id}' in page '${page.id}', see logs for details.`)
-        }
-
-        if (!newGroup || newGroup.id !== group.id) {
             throw new ImportError(`Failed to create group '${group.id}' in page '${page.id}', server returned empty result or id.`)
         }
         return newGroup;
     }
 
-    private async importPage(witLayout: IWITLayout, page: WITProcessDefinitionsInterfaces.Page, payload: IProcessPayload) {
+    private async importPage(targetLayout: WITProcessDefinitionsInterfaces.FormLayout, witLayout: IWITLayout, page: WITProcessDefinitionsInterfaces.Page, payload: IProcessPayload) {
         if (!page) {
             throw new ImportError(`Encourtered null page in work item type '${witLayout.workItemTypeRefName}'`);
         }
 
         let newPage: WITProcessDefinitionsInterfaces.Page; //The newly created page, contains the pageId required to create groups.
-        const targetLayout: WITProcessDefinitionsInterfaces.FormLayout = await this.witProcessDefinitionApi.getFormLayout(payload.process.typeId, witLayout.workItemTypeRefName);
-        if (!targetLayout) {
-            throw new ImportError(`Failed to get layout for work item type '${witLayout.workItemTypeRefName}', server returned empty.`)
-        }
         const createPage: WITProcessDefinitionsInterfaces.Page = Utility.toCreatePage(page);
         const sourcePagesOnTarget: WITProcessDefinitionsInterfaces.Page[] = targetLayout.pages.filter(p => p.id === page.id);
         try {
@@ -440,11 +438,12 @@ export class ProcessImporter {
         }
         catch (error) {
             logger.logException(error);
-            throw new ImportError(`Failed to create or edit'${page.id}' page in ${witLayout.workItemTypeRefName}, see logs for details.`);
+            throw new ImportError(`Failed to create or edit '${page.id}' page in ${witLayout.workItemTypeRefName}, see logs for details.`);
         }
         if (!newPage || !newPage.id) {
-            throw new ImportError(`Failed to create or edit'${page.id}' page in ${witLayout.workItemTypeRefName}, server returned empty result.`);
+            throw new ImportError(`Failed to create or edit '${page.id}' page in ${witLayout.workItemTypeRefName}, server returned empty result.`);
         }
+
         page.id = newPage.id;
         for (const section of page.sections) {
             for (const group of section.groups) {
@@ -483,7 +482,7 @@ export class ProcessImporter {
                         else {
                             // special handling for HTML control - we must create a group containing the HTML control at same time.
                             createGroup.controls = group.controls;
-                            await this.createGroup(createGroup, page, section, group, witLayout, payload);
+                            await this.createGroup(createGroup, page, section, witLayout, payload);
                         }
                     }
                     catch (error) {
@@ -504,7 +503,7 @@ export class ProcessImporter {
                         }
                         else {
                             //create
-                            newGroup = await this.createGroup(createGroup, page, section, group, witLayout, payload);
+                            newGroup = await this.createGroup(createGroup, page, section, witLayout, payload);
                             group.id = newGroup.id;
                         }
                     }
@@ -548,11 +547,16 @@ export class ProcessImporter {
         const importPagePromises: Promise<any>[] = [];
 
         for (const witLayout of payload.layouts) {
+            const targetLayout: WITProcessDefinitionsInterfaces.FormLayout = await this.witProcessDefinitionApi.getFormLayout(payload.process.typeId, witLayout.workItemTypeRefName);
             for (const page of witLayout.layout.pages) {
-                importPagePromises.push(this.importPage(witLayout, page, payload).then(null, (error) => {
-                    Utility.handleKnownError(error);
-                    throw new ImportError(`Failed to import page '${page.id}' in work item type '${witLayout.workItemTypeRefName}'`);
-                }));
+                //TODO: Disable parallel execution, we have server concurrency bug today not handling that well. 
+                // if (page.pageType === WITProcessDefinitionsInterfaces.PageType.Custom) {
+                //     importPagePromises.push(this.importPage(targetLayout, witLayout, page, payload).then(() => { return; }, (error) => {
+                //         Utility.handleKnownError(error);
+                //         throw new ImportError(`Failed to import page '${page.id}' in work item type '${witLayout.workItemTypeRefName}'`);
+                //     }));
+                // }
+                await this.importPage(targetLayout, witLayout, page, payload);
             }
         }
 
@@ -578,14 +582,14 @@ export class ProcessImporter {
                 if (existingStates.length === 0) {  //does not exist on target
                     const createdState = await this.witProcessDefinitionApi.createStateDefinition(sourceState, payload.process.typeId, entry.workItemTypeRefName);
                     if (!createdState || !createdState.id) {
-                        throw new ImportError(`Unable to create state '${sourceState.name}' in '${entry.workItemTypeRefName}' work item type, server returned empty result or id.`);        
+                        throw new ImportError(`Unable to create state '${sourceState.name}' in '${entry.workItemTypeRefName}' work item type, server returned empty result or id.`);
                     }
                 }
                 else {
                     if (sourceState.hidden) { // if state exists on target, only update if hidden 
                         const updatedState = await this.witProcessDefinitionApi.hideStateDefinition({ hidden: true }, payload.process.typeId, entry.workItemTypeRefName, existingStates[0].id);
-                        if (!updatedState || updatedState.id !== sourceState.id || !updatedState.hidden ) {
-                            throw new ImportError(`Unable to hide state '${sourceState.name}' in '${entry.workItemTypeRefName}' work item type, server returned empty result, id or state is not hidden.`);        
+                        if (!updatedState || updatedState.id !== sourceState.id || !updatedState.hidden) {
+                            throw new ImportError(`Unable to hide state '${sourceState.name}' in '${entry.workItemTypeRefName}' work item type, server returned empty result, id or state is not hidden.`);
                         }
                     }
                 }
@@ -862,9 +866,9 @@ export class ProcessImporter {
                 const targetProcessName = this.config.targetProcessName || processPayload.process.name;
                 const processes = await this.witProcessApi.getProcesses();
                 for (const process of processes.filter(p => p.name.toLocaleLowerCase() === targetProcessName.toLocaleLowerCase())) {
-                    logger.logInfo(`Begin delete process ${process.name} on target account before import.`);
+                    logger.logInfo(`Begin delete process '${process.name}' on target account before import.`);
                     await this.witProcessApi.deleteProcess(process.typeId);
-                    logger.logInfo(`Process ${process.name} on target account was deleted.`);
+                    logger.logInfo(`Process '${process.name}' on target account was deleted.`);
                 }
             }
 
@@ -955,7 +959,6 @@ export class ProcessExporter {
                     }
                     _behaviorsWITypeScope.push(witBehaviors);
                 }));
-                perWitPromises.push(Promise.all(currentWitPromises));
 
                 if (workitemtype.class !== WITProcessInterfaces.WorkItemTypeClass.System) {
                     _nonSystemWorkItemTypes.push(workitemtype);
@@ -1007,6 +1010,7 @@ export class ProcessExporter {
                         _rules.push(witRules);
                     }));
                 }
+                perWitPromises.push(Promise.all(currentWitPromises));
             }
 
             return Promise.all(perWitPromises);
