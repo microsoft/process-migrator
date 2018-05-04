@@ -1,4 +1,4 @@
-import { writeFileSync } from "fs";
+import { existsSync, writeFileSync } from "fs";
 import * as vsts from "vso-node-api/WebApi";
 import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
 import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
@@ -11,6 +11,8 @@ import { IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITBehaviors
 import { logger } from "./Logger";
 import { Engine } from "./Engine";
 import { Utility } from "./Utilities";
+import { dirname, resolve } from "path";
+import { sync as mkdirpSync } from "mkdirp";
 
 export class ProcessExporter {
     private _vstsWebApi: vsts.WebApi;
@@ -154,6 +156,10 @@ export class ProcessExporter {
     }
 
     private async _writeProcessPayload(exportFilename: string, payload: IProcessPayload) {
+        const folder = dirname(exportFilename);
+        if (!existsSync(folder)) {
+            mkdirpSync(folder);
+        }
         await writeFileSync(exportFilename, JSON.stringify(payload, null, 2), { flag: "w" });
     }
 
@@ -170,8 +176,7 @@ export class ProcessExporter {
 
         const exportFilename = (this._config.options && this._config.options.processFilename) || defaultProcessFilename;
         await Engine.Task(() => this._writeProcessPayload(exportFilename, payload), "Write process payload to file")
-
-        logger.logInfo("Export process completed successfully.");
+        logger.logInfo(`Export process completed successfully to '${resolve(exportFilename)}'.`);
         return payload;
     }
 }

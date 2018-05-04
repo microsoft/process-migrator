@@ -1,8 +1,8 @@
 export const PICKLIST_NO_ACTION = "PICKLIST_NO_ACTION";
 export const defaultEncoding = "utf-8";
 export const defaultConfigurationFilename = "configuration.json";
-export const defaultLogFileName = "process_import_export.log";
-export const defaultProcessFilename = "processPayload.json";
+export const defaultLogFileName = "output\\process_import_export.log";
+export const defaultProcessFilename = "output\\process.json";
 export const paramMode = "mode";
 export const paramConfig = "config";
 export const paramOverwriteProcessOnTarget = "overwriteProcessOnTarget";

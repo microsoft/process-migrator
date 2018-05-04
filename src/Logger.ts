@@ -1,5 +1,7 @@
-import { appendFileSync, existsSync, unlinkSync } from "fs";
+import { appendFileSync, existsSync, unlinkSync, mkdirSync } from "fs";
 import { LogLevel, ILogger } from "./Interfaces";
+import { dirname } from "path";
+import { sync as mkdirpSync } from "mkdirp";
 
 class ConsoleLogger implements ILogger {
     public logVerbose(message: string) {
@@ -78,7 +80,10 @@ export class FileLogger implements ILogger {
 
 export var logger: ILogger = new ConsoleLogger();
 
-export function InitializeFileLogger (logFilename:string, maxLogLevel : LogLevel) 
-{
+export function InitializeFileLogger(logFilename: string, maxLogLevel: LogLevel) {
+    const folder = dirname(logFilename);
+    if (!existsSync(folder)) {
+        mkdirpSync(folder);
+    }
     this.logger = new FileLogger(logFilename, maxLogLevel);
 }

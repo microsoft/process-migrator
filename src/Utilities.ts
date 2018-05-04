@@ -162,11 +162,7 @@ export class Utility {
     }
 
     public static getLogFilePath(options: IConfigurationOptions): string {
-        const logFilename = format({
-            root: ".",
-            base: options.logFilename ? options.logFilename : defaultLogFileName
-        })
-        return logFilename;
+        return options.logFilename ? options.logFilename : defaultLogFileName;
     }
 
     public static getWebApi(accountUrl: string, PAT: string): vsts.WebApi {

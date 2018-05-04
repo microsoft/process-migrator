@@ -15,8 +15,10 @@
   },
   "dependencies": {
     "@types/minimist": "^1.2.0",
+    "@types/mkdirp": "^0.5.2",
     "guid-typescript": "^1.0.7",
     "minimist": "^1.2.0",
+    "mkdirp": "^0.5.1",
     "node": "^10.0.0",
     "vso-node-api": "^99.99.99"
   }
