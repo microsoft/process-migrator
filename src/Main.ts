@@ -10,6 +10,7 @@ import { Utility } from "./Utilities";
 
 async function main() {
     const startTime = Date.now();
+
     // Parse command line
     const commandLineOptions = ProcesCommandLine();
 
@@ -19,6 +20,9 @@ async function main() {
     // Initialize logger
     const maxLogLevel = configuration.options.logLevel ? LogLevel[configuration.options.logLevel] : LogLevel.information;
     InitializeFileLogger(Utility.getLogFilePath(configuration.options), maxLogLevel);
+
+    // Enable user cancellation
+    Utility.startCanellationListener();
 
     const mode = commandLineOptions.mode;
     const userOptions = configuration.options as IConfigurationOptions;
@@ -61,7 +65,7 @@ async function main() {
     }
 
     const endTime = Date.now();
-    logger.logInfo(`Total elapsed time: '${(endTime-startTime)/1000}' seconds.`)
+    logger.logInfo(`Total elapsed time: '${(endTime-startTime)/1000}' seconds.`);
     process.exit(0);
 }
 
