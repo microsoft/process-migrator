@@ -3,27 +3,27 @@ import { LogLevel, ILogger } from "./Interfaces";
 
 class ConsoleLogger implements ILogger {
     public logVerbose(message: string) {
-        this._log(message, LogLevel.Verbose);
+        this._log(message, LogLevel.verbose);
     }
 
     public logInfo(message: string) {
-        this._log(message, LogLevel.Information);
+        this._log(message, LogLevel.information);
     }
 
     public logWarning(message: string) {
-        this._log(message, LogLevel.Warning);
+        this._log(message, LogLevel.warning);
     }
 
     public logError(message: string) {
-        this._log(message, LogLevel.Error);
+        this._log(message, LogLevel.error);
     }
 
     public logException(error: Error) {
         if (error instanceof Error) {
-            this._log(`Exception message:${error.message}\r\nCall stack:${error.stack}`, LogLevel.Verbose);
+            this._log(`Exception message:${error.message}\r\nCall stack:${error.stack}`, LogLevel.verbose);
         }
         else {
-            this._log(`Unknown exception: ${JSON.stringify(error)}`, LogLevel.Verbose);
+            this._log(`Unknown exception: ${JSON.stringify(error)}`, LogLevel.verbose);
         }
     }
 
@@ -41,32 +41,32 @@ export class FileLogger implements ILogger {
     }
 
     public logVerbose(message: string) {
-        this._log(message, LogLevel.Verbose);
+        this._log(message, LogLevel.verbose);
     }
 
     public logInfo(message: string) {
-        this._log(message, LogLevel.Information);
+        this._log(message, LogLevel.information);
     }
 
     public logWarning(message: string) {
-        this._log(message, LogLevel.Warning);
+        this._log(message, LogLevel.warning);
     }
 
     public logError(message: string) {
-        this._log(message, LogLevel.Error);
+        this._log(message, LogLevel.error);
     }
 
     public logException(error: Error) {
         if (error instanceof Error) {
-            this._log(`Exception message:${error.message}\r\nCall stack:${error.stack}`, LogLevel.Verbose);
+            this._log(`Exception message:${error.message}\r\nCall stack:${error.stack}`, LogLevel.verbose);
         }
         else {
-            this._log(`Unknown exception: ${JSON.stringify(error)}`, LogLevel.Verbose);
+            this._log(`Unknown exception: ${JSON.stringify(error)}`, LogLevel.verbose);
         }
     }
 
     private _log(message: string, logLevel: LogLevel) {
-        const outputMessage: string = `[${LogLevel[logLevel]}] [${(new Date(Date.now())).toISOString()}] ${message}`;
+        const outputMessage: string = `[${LogLevel[logLevel].toUpperCase()}] [${(new Date(Date.now())).toISOString()}] ${message}`;
         if (logLevel <= this._maxLogLevel) {
             console.log(outputMessage);
         }

@@ -3,10 +3,10 @@ import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingP
 import * as WITInterfaces from "vso-node-api/interfaces/WorkItemTrackingInterfaces";
 
 export enum LogLevel {
-    Error,
-    Warning,
-    Information,
-    Verbose
+    error,
+    warning,
+    information,
+    verbose
 }
 
 export enum Modes {
@@ -36,7 +36,7 @@ export interface IConfigurationFile {
 }
 
 export interface IConfigurationOptions {
-    logLevel?: LogLevel;
+    logLevel?: string;
     logFilename?: string;
     processFilename?: string;
     overwritePicklist?: boolean;
@@ -53,7 +53,7 @@ export interface IProcessPayload {
     workItemTypeFields: IWITypeFields[];
     witFieldPicklists: IWITFieldPicklist[];
     layouts: IWITLayout[];
-    behaviors: WITProcessDefinitionsInterfaces.BehaviorModel[];
+    behaviors: WITProcessInterfaces.WorkItemBehavior[];
     workItemTypeBehaviors: IWITBehaviors[];
     states: IWITStates[];
     rules: IWITRules[];

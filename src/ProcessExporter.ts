@@ -46,7 +46,7 @@ export class ProcessExporter {
 
     private async _getComponents(processId: string): Promise<IProcessPayload> {
         let _process: WITProcessInterfaces.ProcessModel;
-        let _behaviorsCollectionScope: WITProcessDefinitionsInterfaces.BehaviorModel[];
+        let _behaviorsCollectionScope: WITProcessInterfaces.WorkItemBehavior[];
         let _fieldsCollectionScope: WITProcessInterfaces.FieldModel[];
         const _fieldsWorkitemtypeScope: IWITypeFields[] = [];
         const _layouts: IWITLayout[] = [];
@@ -60,7 +60,7 @@ export class ProcessExporter {
 
         processPromises.push(this._witProcessApi.getProcessById(processId).then(process => _process = process));
         processPromises.push(this._witProcessApi.getFields(processId).then(fields => _fieldsCollectionScope = fields));
-        processPromises.push(this._witProcessDefinitionApi.getBehaviors(processId).then(behaviors => _behaviorsCollectionScope = behaviors));
+        processPromises.push(this._witProcessApi.getBehaviors(processId).then(behaviors => _behaviorsCollectionScope = behaviors));
         processPromises.push(this._witProcessApi.getWorkItemTypes(processId).then(workitemtypes => {
             const perWitPromises: Promise<any>[] = [];
 

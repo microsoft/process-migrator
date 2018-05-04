@@ -126,17 +126,19 @@ export class Utility {
         return createPage;
     }
 
-    public static toCreateBehavior(behavior: WITProcessDefinitionsInterfaces.BehaviorModel): WITProcessDefinitionsInterfaces.BehaviorCreateModel {
-        let createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = {
+    public static toCreateBehavior(behavior: WITProcessInterfaces.WorkItemBehavior): WITProcessDefinitionsInterfaces.BehaviorCreateModel {
+        const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = {
             color: behavior.color,
             inherits: behavior.inherits.id,
             name: behavior.name
-        }
+        };
+        // TODO: Move post S135 when generated model has id. 
+        (<any>createBehavior).id = behavior.id;
         return createBehavior;
     }
 
-    public static toReplaceBehavior(behavior: WITProcessDefinitionsInterfaces.BehaviorModel): WITProcessDefinitionsInterfaces.BehaviorReplaceModel {
-        let replaceBehavior: WITProcessDefinitionsInterfaces.BehaviorReplaceModel = {
+    public static toReplaceBehavior(behavior: WITProcessInterfaces.WorkItemBehavior): WITProcessDefinitionsInterfaces.BehaviorReplaceModel {
+        const replaceBehavior: WITProcessDefinitionsInterfaces.BehaviorReplaceModel = {
             color: behavior.color,
             name: behavior.name
         }

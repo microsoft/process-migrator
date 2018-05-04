@@ -9,6 +9,7 @@ import { ProcessImporter } from "./ProcessImporter";
 import { Utility } from "./Utilities";
 
 async function main() {
+    const startTime = Date.now();
     // Parse command line
     const commandLineOptions = ProcesCommandLine();
 
@@ -16,7 +17,7 @@ async function main() {
     const configuration = await ProcessConfigurationFile(commandLineOptions.config, commandLineOptions.mode)
 
     // Initialize logger
-    const maxLogLevel = configuration.options.logLevel ? configuration.options.logLevel : LogLevel.Information;
+    const maxLogLevel = configuration.options.logLevel ? LogLevel[configuration.options.logLevel] : LogLevel.information;
     InitializeFileLogger(Utility.getLogFilePath(configuration.options), maxLogLevel);
 
     const mode = commandLineOptions.mode;
@@ -58,6 +59,9 @@ async function main() {
         }
         process.exit(1);
     }
+
+    const endTime = Date.now();
+    logger.logInfo(`Total elapsed time: '${(endTime-startTime)/1000}' seconds.`)
     process.exit(0);
 }
 

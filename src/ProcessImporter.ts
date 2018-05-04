@@ -389,10 +389,18 @@ export class ProcessImporter {
         }
     }
 
-    private async importBehaviors(payload: IProcessPayload): Promise<void> {
+    private async _importBehaviors(payload: IProcessPayload): Promise<void> {
+        const behaviorsOnTarget = await Utility.tryCatchWithKnownError(
+            async () => {
+                return await Engine.Task(
+                    () => this._witProcessApi.getBehaviors(payload.process.typeId),
+                    `Get behaviors on target account`);
+            }, () => new ImportError(`Fialed to get behaviors on target account.`));
+
         for (const behavior of payload.behaviors) {
             try {
-                if (!behavior.overridden) {
+                const existing = behaviorsOnTarget.some(b => b.id === behavior.id);
+                if (!existing) {
                     const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = Utility.toCreateBehavior(behavior);
                     const createdBehavior = await Engine.Task(
                         () => this._witProcessDefinitionApi.createBehavior(createBehavior, payload.process.typeId),
@@ -407,7 +415,7 @@ export class ProcessImporter {
                         () => this._witProcessDefinitionApi.replaceBehavior(replaceBehavior, payload.process.typeId, behavior.id),
                         `Replace behavior '${behavior.name}'`);
                     if (!replacedBehavior) {
-                        throw new ImportError(`Failed to create behavior '${behavior.name}', server returned empty result.`)
+                        throw new ImportError(`Failed to replace behavior '${behavior.name}', server returned empty result.`)
                     }
                 }
             }
@@ -513,7 +521,7 @@ export class ProcessImporter {
         await Engine.Task(() => this._importLayouts(payload), "Import work item form layouts on target process");
         await Engine.Task(() => this._importStates(payload), "Import states on target process");
         await Engine.Task(() => this._importRules(payload), "Import rules on target process");
-        await Engine.Task(() => this.importBehaviors(payload), "Import behaviors on target process");
+        await Engine.Task(() => this._importBehaviors(payload), "Import behaviors on target process");
         await Engine.Task(() => this._addBehaviorsToWorkItemTypes(payload), "Add behavior to work item types on target process");
     }
 
@@ -637,9 +645,11 @@ export class ProcessImporter {
     private async _deleteProcessOnTarget(targetProcessName: string) {
         const processes = await this._witProcessApi.getProcesses();
         for (const process of processes.filter(p => p.name.toLocaleLowerCase() === targetProcessName.toLocaleLowerCase())) {
-            await Engine.Task(
-                () => this._witProcessApi.deleteProcess(process.typeId),
-                `Delete process '${process.name}' on target account`);
+            await Utility.tryCatchWithKnownError(
+                async () => await Engine.Task(
+                    () => this._witProcessApi.deleteProcess(process.typeId),
+                    `Delete process '${process.name}' on target account`),
+                () => new ImportError(`Failed to delete process on target, do you have projects created using that project?`));
         }
     }
 
