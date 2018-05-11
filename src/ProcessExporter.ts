@@ -168,10 +168,10 @@ export class ProcessExporter {
 
         await Utility.tryCatchWithKnownError(
             () => this._getApis(),
-            () => new ExportError(`Failed to connect to source account '${this._config.sourceAccountUrl}' - check url and token.`));
+            () => new ExportError(`Failed to connect or authenticate with source account '${this._config.sourceAccountUrl}' - check url and token.`));
 
 
-        const processId = await Engine.Task(() => this._getSourceProcessId(), "Get source process Id form name");
+        const processId = await Engine.Task(() => this._getSourceProcessId(), "Get source process Id from name");
         const payload = await Engine.Task(() => this._getComponents(processId), "Get artifacts from source process");
 
         const exportFilename = (this._config.options && this._config.options.processFilename) || defaultProcessFilename;

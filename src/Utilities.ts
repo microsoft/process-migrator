@@ -126,6 +126,19 @@ export class Utility {
         return createPage;
     }
 
+    /**Convert a state result to state input
+    * @param group
+    */
+    public static toUdpateStateDefinition(state: WITProcessInterfaces.WorkItemStateResultModel): WITProcessDefinitionsInterfaces.WorkItemStateInputModel {
+        const updateState: WITProcessDefinitionsInterfaces.WorkItemStateInputModel = {
+            color: state.color,
+            name: state.name,
+            stateCategory: state.stateCategory,
+            order: null
+        }
+        return updateState;
+    }
+
     public static toCreateBehavior(behavior: WITProcessInterfaces.WorkItemBehavior): WITProcessDefinitionsInterfaces.BehaviorCreateModel {
         const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = {
             color: behavior.color,

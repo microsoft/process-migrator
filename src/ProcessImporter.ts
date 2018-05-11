@@ -331,7 +331,7 @@ export class ProcessImporter {
         for (const sourceState of witStateEntry.states) {
             try {
                 const existingStates: WITProcessDefinitionsInterfaces.WorkItemStateResultModel[] = targetWITStates.filter(targetState => sourceState.name === targetState.name);
-                if (existingStates.length === 0) {  //does not exist on target
+                if (existingStates.length === 0) {  // does not exist on target
                     const createdState = await Engine.Task(
                         () => this._witProcessDefinitionApi.createStateDefinition(sourceState, payload.process.typeId, witStateEntry.workItemTypeRefName),
                         `Create state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
@@ -341,21 +341,46 @@ export class ProcessImporter {
                 }
                 else {
                     if (sourceState.hidden) { // if state exists on target, only update if hidden 
-                        const updatedState = await Engine.Task(
+                        const hiddenState = await Engine.Task(
                             () => this._witProcessDefinitionApi.hideStateDefinition({ hidden: true }, payload.process.typeId, witStateEntry.workItemTypeRefName, existingStates[0].id),
                             `Hide state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
-                        if (!updatedState || updatedState.id !== sourceState.id || !updatedState.hidden) {
+                        if (!hiddenState || hiddenState.name !== sourceState.name || !hiddenState.hidden) {
                             throw new ImportError(`Unable to hide state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, server returned empty result, id or state is not hidden.`);
+                        }
+                    }
+
+                    const existingState = existingStates[0];
+                    if (sourceState.color !== existingState.color || sourceState.stateCategory !== existingState.stateCategory || sourceState.name !== existingState.name) {
+                        // Inherited state can be edited in custom work item types.
+                        const updatedState = await Engine.Task(
+                            () => this._witProcessDefinitionApi.updateStateDefinition(Utility.toUdpateStateDefinition(sourceState), payload.process.typeId, witStateEntry.workItemTypeRefName, existingState.id),
+                            `Update state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
+                        if (!updatedState || updatedState.name !== sourceState.name) {
+                            throw new ImportError(`Unable to update state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, server returned empty result, id or state is not hidden.`);
                         }
                     }
                 }
             }
             catch (error) {
                 Utility.handleKnownError(error);
-                throw new ImportError(`Unable to create/hide state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, see logs for details`);
+                throw new ImportError(`Unable to create/hide/update state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, see logs for details`);
+            }
+        }
+
+        for (const targetState of targetWITStates) {
+            const sourceStateMatchingTarget: WITProcessDefinitionsInterfaces.WorkItemStateResultModel[] = witStateEntry.states.filter(sourceState => sourceState.name === targetState.name);
+            if (sourceStateMatchingTarget.length === 0) {
+                try {
+                    await Engine.Task(() => this._witProcessDefinitionApi.deleteStateDefinition(payload.process.typeId, witStateEntry.workItemTypeRefName, targetState.id),
+                        `Delete state '${targetState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
+                }
+                catch (error) {
+                    throw new ImportError(`Unable to delete state '${targetState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, see logs for details`);
+                }
             }
         }
     }
+
 
     private async _importStates(payload: IProcessPayload): Promise<void> {
         for (const witStateEntry of payload.states) {
@@ -669,7 +694,7 @@ export class ProcessImporter {
 
         await Utility.tryCatchWithKnownError(
             () => this._getApis(),
-            () => new ImportError(`Failed to connect to target account '${this._config.targetAccountUrl}' - check url and token.`));
+            () => new ImportError(`Failed to connect or authenticate with target account '${this._config.targetAccountUrl}' - check url and token.`));
 
         try {
             if (this._config.targetProcessName) {
