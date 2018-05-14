@@ -21,3 +21,4 @@ export const defaultConfiguration =
             "overwritePicklist": false
         }
     };
+export const regexRemoveHypen = new RegExp("-","g");

@@ -7,7 +7,7 @@ import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingP
 import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi, IWorkItemTrackingProcessDefinitionsApi } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
 import { IWorkItemTrackingProcessApi as WITProcessApi, IWorkItemTrackingProcessApi } from "vso-node-api/WorkItemTrackingProcessApi";
 import { IWorkItemTrackingApi as WITApi } from "vso-node-api/WorkItemTrackingApi";
-import { PICKLIST_NO_ACTION } from "./Constants";
+import { PICKLIST_NO_ACTION,regexRemoveHypen } from "./Constants";
 import { Engine } from "./Engine";
 import { ImportError, ValidationError } from "./Errors";
 import { ICommandLineOptions, IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITLayout, IWITRules, IWITStates } from "./Interfaces";
@@ -420,25 +420,32 @@ export class ProcessImporter {
                 return await Engine.Task(
                     () => this._witProcessApi.getBehaviors(payload.process.typeId),
                     `Get behaviors on target account`);
-            }, () => new ImportError(`Fialed to get behaviors on target account.`));
+            }, () => new ImportError(`Failed to get behaviors on target account.`));
+
+        const behaviorIdToRealNameBehavior: { [id: string]: WITProcessDefinitionsInterfaces.BehaviorReplaceModel } = {};
 
         for (const behavior of payload.behaviors) {
             try {
                 const existing = behaviorsOnTarget.some(b => b.id === behavior.id);
                 if (!existing) {
                     const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = Utility.toCreateBehavior(behavior);
+                    // Use a random name to avoid conflict on scenarios involving a name swap 
+                    behaviorIdToRealNameBehavior[behavior.id] = Utility.toReplaceBehavior(behavior); 
+                    createBehavior.name = Guid.create().toString().replace(regexRemoveHypen,"");
                     const createdBehavior = await Engine.Task(
                         () => this._witProcessDefinitionApi.createBehavior(createBehavior, payload.process.typeId),
-                        `Create behavior '${behavior.name}'`);
+                        `Create behavior '${behavior.id}' with fake name '${behavior.name}'`);
                     if (!createdBehavior || createdBehavior.id !== behavior.id) {
                         throw new ImportError(`Failed to create behavior '${behavior.name}', server returned empty result or id does not match.`)
                     }
                 }
                 else {
                     const replaceBehavior: WITProcessDefinitionsInterfaces.BehaviorReplaceModel = Utility.toReplaceBehavior(behavior);
+                    behaviorIdToRealNameBehavior[behavior.id] = Utility.toReplaceBehavior(behavior);
+                    replaceBehavior.name = Guid.create().toString().replace(regexRemoveHypen,"");
                     const replacedBehavior = await Engine.Task(
                         () => this._witProcessDefinitionApi.replaceBehavior(replaceBehavior, payload.process.typeId, behavior.id),
-                        `Replace behavior '${behavior.name}'`);
+                        `Replace behavior '${behavior.id}' with fake name '${behavior.name}'`);
                     if (!replacedBehavior) {
                         throw new ImportError(`Failed to replace behavior '${behavior.name}', server returned empty result.`)
                     }
@@ -447,6 +454,17 @@ export class ProcessImporter {
             catch (error) {
                 logger.logException(error);
                 throw new ImportError(`Failed to import behavior ${behavior.name}, see logs for details.`);
+            }
+        }
+
+        // Recover the behavior names to what they should be
+        for (const id in behaviorIdToRealNameBehavior) {
+            const behaviorWithRealName = behaviorIdToRealNameBehavior[id];
+            const replacedBehavior = await Engine.Task(
+                () => this._witProcessDefinitionApi.replaceBehavior(behaviorWithRealName, payload.process.typeId, id),
+                `Replace behavior '${id}' to it's real name '${behaviorWithRealName.name}'`);
+            if (!replacedBehavior) {
+                throw new ImportError(`Failed to replace behavior id '${id}' to its real name, server returned empty result.`)
             }
         }
     }
