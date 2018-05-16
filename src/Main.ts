@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { existsSync, readFileSync } from "fs";
 import { ProcesCommandLine, ProcessConfigurationFile } from "./ConfigurationProcessor";
 import { defaultEncoding, defaultProcessFilename } from "./Constants";

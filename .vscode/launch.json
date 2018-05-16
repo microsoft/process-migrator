@@ -4,11 +4,12 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch process import ",
+            "name": "Launch process import/export ",
             "program": "${workspaceFolder}/build/main.js",
             "sourceMaps": true,
             "args": [
                 "--mode=both",
+                "--config=configuration.json",
                 "--overwriteProcessOnTarget"
             ]
         }

@@ -13,6 +13,7 @@ import { Engine } from "./Engine";
 import { Utility } from "./Utilities";
 import { dirname, resolve } from "path";
 import { sync as mkdirpSync } from "mkdirp";
+import { ProcessClass } from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
 
 export class ProcessExporter {
     private _vstsWebApi: vsts.WebApi;
@@ -43,7 +44,12 @@ export class ProcessExporter {
         if (matchProcesses.length === 0) {
             throw new ExportError(`Process '${this._config.sourceProcessName}' is not found on source account.`);
         }
-        return matchProcesses[0].typeId;
+
+        const process = matchProcesses[0];
+        if (process.properties.class !== ProcessClass.Derived) {
+            throw new ExportError(`Proces '${this._config.sourceProcessName}' is not a derived process, not supported.`);
+        }
+        return process.typeId;
     }
 
     private async _getComponents(processId: string): Promise<IProcessPayload> {

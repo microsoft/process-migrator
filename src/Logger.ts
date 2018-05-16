@@ -30,7 +30,7 @@ class ConsoleLogger implements ILogger {
     }
 
     private _log(message: string, logLevel: LogLevel) {
-        const outputMessage: string = `[${LogLevel[logLevel]}] [${(new Date(Date.now())).toISOString()}] ${message}`;
+        const outputMessage: string = `[${LogLevel[logLevel].toUpperCase()}] [${(new Date(Date.now())).toISOString()}] ${message}`;
         console.log(outputMessage);
     }
 }

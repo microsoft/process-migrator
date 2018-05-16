@@ -7,7 +7,7 @@ import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingP
 import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi, IWorkItemTrackingProcessDefinitionsApi } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
 import { IWorkItemTrackingProcessApi as WITProcessApi, IWorkItemTrackingProcessApi } from "vso-node-api/WorkItemTrackingProcessApi";
 import { IWorkItemTrackingApi as WITApi } from "vso-node-api/WorkItemTrackingApi";
-import { PICKLIST_NO_ACTION,regexRemoveHypen } from "./Constants";
+import { PICKLIST_NO_ACTION, regexRemoveHypen } from "./Constants";
 import { Engine } from "./Engine";
 import { ImportError, ValidationError } from "./Errors";
 import { ICommandLineOptions, IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITLayout, IWITRules, IWITStates } from "./Interfaces";
@@ -430,8 +430,8 @@ export class ProcessImporter {
                 if (!existing) {
                     const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = Utility.toCreateBehavior(behavior);
                     // Use a random name to avoid conflict on scenarios involving a name swap 
-                    behaviorIdToRealNameBehavior[behavior.id] = Utility.toReplaceBehavior(behavior); 
-                    createBehavior.name = Guid.create().toString().replace(regexRemoveHypen,"");
+                    behaviorIdToRealNameBehavior[behavior.id] = Utility.toReplaceBehavior(behavior);
+                    createBehavior.name = Guid.create().toString().replace(regexRemoveHypen, "");
                     const createdBehavior = await Engine.Task(
                         () => this._witProcessDefinitionApi.createBehavior(createBehavior, payload.process.typeId),
                         `Create behavior '${behavior.id}' with fake name '${behavior.name}'`);
@@ -442,7 +442,7 @@ export class ProcessImporter {
                 else {
                     const replaceBehavior: WITProcessDefinitionsInterfaces.BehaviorReplaceModel = Utility.toReplaceBehavior(behavior);
                     behaviorIdToRealNameBehavior[behavior.id] = Utility.toReplaceBehavior(behavior);
-                    replaceBehavior.name = Guid.create().toString().replace(regexRemoveHypen,"");
+                    replaceBehavior.name = Guid.create().toString().replace(regexRemoveHypen, "");
                     const replacedBehavior = await Engine.Task(
                         () => this._witProcessDefinitionApi.replaceBehavior(replaceBehavior, payload.process.typeId, behavior.id),
                         `Replace behavior '${behavior.id}' with fake name '${behavior.name}'`);
@@ -569,6 +569,10 @@ export class ProcessImporter {
     }
 
     private async _validateProcess(payload: IProcessPayload): Promise<void> {
+        if (payload.process.properties.class != WITProcessInterfaces.ProcessClass.Derived) {
+            throw new ValidationError("Only inherited process is supported to be imported.");
+        }
+
         const targetProcesses: WITProcessInterfaces.ProcessModel[] =
             await Utility.tryCatchWithKnownError(async () => {
                 return await Engine.Task(() => this._witProcessApi.getProcesses(), `Get processes on target account`);
@@ -615,9 +619,10 @@ export class ProcessImporter {
         const ret: IDictionaryStringTo<WITProcessDefinitionsInterfaces.PickListModel> = {};
         const promises: Promise<any>[] = [];
         for (const field of fields) {
-            assert(field.isPicklist || !field.picklistId, "Non picklist field should not have picklist")
-            if (field.isPicklist && field.picklistId) {
-                promises.push(this._witProcessDefinitionApi.getList(field.picklistId).then(list => ret[field.referenceName] = list));
+            const anyField = <any>field; // TODO: When vso-node-api updates, remove this hack
+            assert(field.isPicklist || !anyField.picklistId, "Non picklist field should not have picklist")
+            if (field.isPicklist && anyField.picklistId) {
+                promises.push(this._witProcessDefinitionApi.getList(anyField.picklistId).then(list => ret[field.referenceName] = list));
             }
         }
         await Promise.all(promises);

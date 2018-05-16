@@ -1,30 +1,44 @@
-# Introduction
+# VSTS Process Import/Export for Node.js
 
-The Process Import/Export (PIE) feature provides users with a way to automate the [Process](https://docs.microsoft.com/en-us/vsts/work/customize/process/manage-process?view=vsts) replication across accounts through a Node.js command line interface.
+This application provide you ability to automate the [Process](https://docs.microsoft.com/en-us/vsts/work/customize/process/manage-process?view=vsts) import/export across VSTS accounts through Node.js commmand line interface.
 
-The tool gives user option to export a Process from an account, and save it locally, and/or to do an online re-import into another account.
+NOTE: This only works with 'Inherited Process', for 'XML process' you can upload/download process as ZIP. 
 
-  
+ 
 # Getting Started
 
+## Run
 
-**1. Prerequisite**
-
-- Install [npm](https://www.npmjs.com/get-npm)
-- From repository root, run `npm install` 
+- Install npm if haven't - [link](https://www.npmjs.com/get-npm)
+- Install this package through `npm install vsts-process-import-export -g` 
+- Create a configuration.json, see [doc section](#documentation) for explanation on details 
+- Run `vstspie --mode=<import/export/both> [--config=<your-configuration-file-path>] [--overwriteProcessOnTarget]`
   
-**2. Build**
+## Contribute
 
-- In root directory of repository, run `npm run build`
+- From the root of source, run `npm install`
+- Build by `npm run build`
+- Execute through `node build\main.js <args>`
 
-**3. Run**
-
-- Set up `configuration.json`
-	- Configure account url and credentials. Source account is required; target account credentials required only if doing online re-import.
-	- `"sourceProcessName"` name of the Process on the source account to export.
-	- `"targetProcessName"` optional new name to give to Process in the target account.
-	-  `"writeToFile"` serialize exported Process to file (not mutually exclusive with onlineReImport)
-	- `"onlineReImport"` whether exported Process should be imported into specified target account.
-	- `"overwritePicklist"` property that specifies which to keep if there is a conflict (by refName) between the picklists on source and target.
-
-- Launch application `node ./build/ImportExportProcess.js` on root directory of repository.
+## Documentation
+##### Command line parameters
+- --mode: Mode of the application, can be import, export or both 
+- --config: Optional, use to specify a non-default configuration file. (Default is Configuration.json under current folder)
+- --overwriteProcessOnTarget: Optional, if set to true import will delete the process with same name before start, otherwise import fails if process exists on target account. 
+##### Configuration file strcuture
+``` json
+{
+    "sourceAccountUrl": "Required in 'export/both' mode, source account url.",
+    "sourceAccountToken": "Required in 'export/both' mode, personal access token for source account.",
+    "targetAccountUrl": "Required in 'import/both' mode, target account url.",
+    "targetAccountToken": "Required in 'import/both' mode, personal access token for target account.",
+    "sourceProcessName": "Process name for export, required in 'export/both' mode and not used in 'import' mode.",
+    "targetProcessName": "Optional - Set to override process name on import.",
+    "options": {
+        "processFilename": "Required in 'import' mode, optional in 'export/both' mode to override default process export file name.",
+        "logLevel":"Optional - Set to override default log level (Information), possible values are 'Verbose'/'Information'/'Warning'/'Error'.",
+        "logFilename":"Optional - Set to override default log file name",
+        "overwritePicklist": "Set true to overwrite picklist if exists on target, otherwise import will fail if picklist exists but different from source."
+    }
+}
+```
