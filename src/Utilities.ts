@@ -127,7 +127,7 @@ export class Utility {
     }
 
     /**Convert a state result to state input
-    * @param group
+    * @param state state result
     */
     public static toUdpateStateDefinition(state: WITProcessInterfaces.WorkItemStateResultModel): WITProcessDefinitionsInterfaces.WorkItemStateInputModel {
         const updateState: WITProcessDefinitionsInterfaces.WorkItemStateInputModel = {
