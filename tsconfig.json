@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
     "noImplicitAny": false,
-    "outDir": "./build/",
+    "noImplicitThis": true,
+    "outDir": "build/",
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,
-    "target": "ES5",
-    "lib": [
-      "es2015"
-    ]
+    "target": "es2017", // to not transpile async/await
+    "module": "commonjs",
+    "moduleResolution": "node",
   },
   "include": [
     "src/**/*.ts"
@@ -16,4 +16,4 @@
   "exclude": [
     "node_modules"
   ]
-} 
+}

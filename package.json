@@ -1,17 +1,20 @@
 {
-  "name": "vsts-process-import-export",
+  "name": "process-import-export",
   "version": "0.9.0",
   "description": "Proces import/export Node.js application",
   "main": "",
   "bin": {
-    "vstspie": "build/main.js"
+    "pie": "build/main.js"
+  },
+  "engines": {
+    "node": ">=8.11.2"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/vsts-process-import-export"
+    "url": "https://github.com/Microsoft/process-import-export"
   },
   "keywords": [
     "vsts",
@@ -23,9 +26,9 @@
   "author": "Microsoft",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^9.6.2",
     "@types/minimist": "^1.2.0",
     "@types/mkdirp": "^0.5.2",
+    "@types/node": "^8.10.15",
     "typescript": "^2.8.1"
   },
   "dependencies": {

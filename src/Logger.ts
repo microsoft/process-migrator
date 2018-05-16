@@ -85,5 +85,5 @@ export function InitializeFileLogger(logFilename: string, maxLogLevel: LogLevel)
     if (!existsSync(folder)) {
         mkdirpSync(folder);
     }
-    this.logger = new FileLogger(logFilename, maxLogLevel);
+    logger = new FileLogger(logFilename, maxLogLevel);
 }
