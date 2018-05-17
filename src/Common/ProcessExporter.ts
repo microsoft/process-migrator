@@ -1,34 +1,28 @@
 import { existsSync, writeFileSync } from "fs";
-import * as vsts from "vso-node-api/WebApi";
 import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
 import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
-import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
-import { IWorkItemTrackingProcessApi as WITProcessApi } from "vso-node-api/WorkItemTrackingProcessApi";
-import { IWorkItemTrackingApi as WITApi } from "vso-node-api/WorkItemTrackingApi";
-import { defaultProcessFilename } from "./Constants";
+
+import * as vsts_NOREQUIRE from "vso-node-api/WebApi";
+import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
+import { IWorkItemTrackingProcessApi as WITProcessApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingProcessApi";
+import { IWorkItemTrackingApi as WITApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingApi";
+
+import { IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITBehaviors, IWITBehaviorsInfo, IWITFieldPicklist, IWITLayout, IWITRules, IWITStates, IWITypeFields, IRestClients } from "./Interfaces";
 import { ExportError } from "./Errors";
-import { IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITBehaviors, IWITBehaviorsInfo, IWITFieldPicklist, IWITLayout, IWITRules, IWITStates, IWITypeFields } from "./Interfaces";
 import { logger } from "./Logger";
 import { Engine } from "./Engine";
 import { Utility } from "./Utilities";
-import { dirname, resolve } from "path";
-import { sync as mkdirpSync } from "mkdirp";
-import { ProcessClass } from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
 
 export class ProcessExporter {
-    private _vstsWebApi: vsts.WebApi;
-    private _witProcessApi: WITProcessApi;
-    private _witProcessDefinitionApi: WITProcessDefinitionApi;
-    private _witApi: WITApi;
+    private _vstsWebApi: vsts_NOREQUIRE.WebApi;
+    private _witProcessApi: WITProcessApi_NOREQUIRE;
+    private _witProcessDefinitionApi: WITProcessDefinitionApi_NOREQUIRE;
+    private _witApi: WITApi_NOREQUIRE;
 
-    constructor(vstsWebApi: vsts.WebApi, private _config: IConfigurationFile) {
-        this._vstsWebApi = vstsWebApi;
-    }
-
-    private async _getApis() {
-        this._witApi = await this._vstsWebApi.getWorkItemTrackingApi();
-        this._witProcessApi = await this._vstsWebApi.getWorkItemTrackingProcessApi();
-        this._witProcessDefinitionApi = await this._vstsWebApi.getWorkItemTrackingProcessDefinitionApi();
+    constructor(restClients: IRestClients, private _config: IConfigurationFile) {
+        this._witApi = restClients.witApi;
+        this._witProcessApi = restClients.witProcessApi;
+        this._witProcessDefinitionApi = restClients.witProcessDefinitionApi;
     }
 
     private async _getSourceProcessId(): Promise<string> {
@@ -46,7 +40,7 @@ export class ProcessExporter {
         }
 
         const process = matchProcesses[0];
-        if (process.properties.class !== ProcessClass.Derived) {
+        if (process.properties.class !== WITProcessInterfaces.ProcessClass.Derived) {
             throw new ExportError(`Proces '${this._config.sourceProcessName}' is not a derived process, not supported.`);
         }
         return process.typeId;
@@ -161,28 +155,13 @@ export class ProcessExporter {
         return processPayload;
     }
 
-    private async _writeProcessPayload(exportFilename: string, payload: IProcessPayload) {
-        const folder = dirname(exportFilename);
-        if (!existsSync(folder)) {
-            mkdirpSync(folder);
-        }
-        await writeFileSync(exportFilename, JSON.stringify(payload, null, 2), { flag: "w" });
-    }
-
     public async exportProcess(): Promise<IProcessPayload> {
         logger.logInfo("Export process started.");
-
-        await Utility.tryCatchWithKnownError(
-            () => this._getApis(),
-            () => new ExportError(`Failed to connect or authenticate with source account '${this._config.sourceAccountUrl}' - check url and token.`));
-
 
         const processId = await Engine.Task(() => this._getSourceProcessId(), "Get source process Id from name");
         const payload = await Engine.Task(() => this._getComponents(processId), "Get artifacts from source process");
 
-        const exportFilename = (this._config.options && this._config.options.processFilename) || defaultProcessFilename;
-        await Engine.Task(() => this._writeProcessPayload(exportFilename, payload), "Write process payload to file")
-        logger.logInfo(`Export process completed successfully to '${resolve(exportFilename)}'.`);
+        logger.logInfo("Export process completed.");
         return payload;
     }
 }

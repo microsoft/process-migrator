@@ -1,9 +1,10 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import * as minimist from "minimist";
 import * as url from "url";
-import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramOverwriteProcessOnTarget } from "./Constants";
-import { IConfigurationFile, LogLevel, Modes, ICommandLineOptions } from "./Interfaces";
-import { logger } from "./Logger";
+import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramOverwriteProcessOnTarget } from "../common/Constants";
+import { IConfigurationFile, LogLevel, Modes, ICommandLineOptions } from "../common/Interfaces";
+import { logger } from "../common/Logger";
+import { Utility } from "../common/Utilities";
 
 export function ProcesCommandLine(): ICommandLineOptions {
     const parseOptions: minimist.Opts = {
@@ -55,51 +56,12 @@ export async function ProcessConfigurationFile(configFilename: string, mode: Mod
         }
         process.exit(1);
     }
-
    
     const configuration = JSON.parse(await readFileSync(configFilename, defaultEncoding)) as IConfigurationFile;
-    if (!validateConfiguration(configuration, mode)) {
+    if (!Utility.validateConfiguration(configuration, mode)) {
         process.exit(1);
     }
 
     return configuration;
 }
 
-function validateConfiguration(configuration: IConfigurationFile, mode: Modes): boolean {
-    if (mode === Modes.export || mode === Modes.both) {
-        if (!configuration.sourceAccountUrl || !url.parse(configuration.sourceAccountUrl).host) {
-            logger.logError(`[Configuration validation] Missing or invalid source account url: '${configuration.sourceAccountUrl}'.`);
-            return false;
-        }
-        if (!configuration.sourceAccountToken) {
-            logger.logError(`[Configuration validation] Missing personal access token for source account.`);
-            return false;
-        }
-        if (!configuration.sourceProcessName) {
-            logger.logError(`[Configuration validation] Missing source process name.`);
-            return false;
-        }
-    }
-
-    if (mode === Modes.import || mode === Modes.both) {
-        if (!configuration.targetAccountUrl || !url.parse(configuration.targetAccountUrl).host) {
-            logger.logError(`[Configuration validation] Missing or invalid target account url: '${configuration.targetAccountUrl}'.`);
-            return false;
-        }
-        if (!configuration.targetAccountToken) {
-            logger.logError(`[Configuration validation] Personal access token for target account is empty.`);
-            return false;
-        }
-        if (configuration.options && configuration.options.overwritePicklist && (configuration.options.overwritePicklist !== true && configuration.options.overwritePicklist !== false)) {
-            logger.logError(`[Configuration validation] Option 'overwritePicklist' is not a valid boolean.`);
-            return false;
-        }
-    }
-
-    if (configuration.options && configuration.options.logLevel && LogLevel[configuration.options.logLevel] === undefined) {
-        logger.logError(`[Configuration validation] Option 'logLevel' is not a valid log level.`);
-        return false;
-    }
-
-    return true;
-}

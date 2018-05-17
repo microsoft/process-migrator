@@ -1,33 +1,29 @@
 import * as assert from "assert";
 import { Guid } from "guid-typescript";
-import * as vsts from "vso-node-api/WebApi";
+
 import * as WITInterfaces from "vso-node-api/interfaces/WorkItemTrackingInterfaces";
 import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
 import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
-import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi, IWorkItemTrackingProcessDefinitionsApi } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
-import { IWorkItemTrackingProcessApi as WITProcessApi, IWorkItemTrackingProcessApi } from "vso-node-api/WorkItemTrackingProcessApi";
-import { IWorkItemTrackingApi as WITApi } from "vso-node-api/WorkItemTrackingApi";
+import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
+import { IWorkItemTrackingProcessApi as WITProcessApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingProcessApi";
+import { IWorkItemTrackingApi as WITApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingApi";
+
 import { PICKLIST_NO_ACTION, regexRemoveHypen } from "./Constants";
 import { Engine } from "./Engine";
 import { ImportError, ValidationError } from "./Errors";
-import { ICommandLineOptions, IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITLayout, IWITRules, IWITStates } from "./Interfaces";
+import { ICommandLineOptions, IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITLayout, IWITRules, IWITStates, IRestClients } from "./Interfaces";
 import { logger } from "./Logger";
 import { Utility } from "./Utilities";
 
 export class ProcessImporter {
-    private _vstsWebApi: vsts.WebApi;
-    private _witProcessApi: WITProcessApi;
-    private _witProcessDefinitionApi: WITProcessDefinitionApi;
-    private _witApi: WITApi;
+    private _witProcessApi: WITProcessApi_NOREQUIRE;
+    private _witProcessDefinitionApi: WITProcessDefinitionApi_NOREQUIRE;
+    private _witApi: WITApi_NOREQUIRE;
 
-    constructor(vstsWebApi: vsts.WebApi, private _config?: IConfigurationFile, private _commandLineOptions?: ICommandLineOptions) {
-        this._vstsWebApi = vstsWebApi;
-    }
-
-    private async _getApis() {
-        this._witApi = await this._vstsWebApi.getWorkItemTrackingApi();
-        this._witProcessApi = await this._vstsWebApi.getWorkItemTrackingProcessApi();
-        this._witProcessDefinitionApi = await this._vstsWebApi.getWorkItemTrackingProcessDefinitionApi();
+    constructor(restClients: IRestClients, private _config?: IConfigurationFile, private _commandLineOptions?: ICommandLineOptions) {
+        this._witApi = restClients.witApi;
+        this._witProcessApi = restClients.witProcessApi;
+        this._witProcessDefinitionApi = restClients.witProcessDefinitionApi;
     }
 
     private async _importWorkItemTypes(payload: IProcessPayload): Promise<void> {
@@ -714,10 +710,6 @@ export class ProcessImporter {
 
     public async importProcess(payload: IProcessPayload): Promise<void> {
         logger.logInfo("Process import started.");
-
-        await Utility.tryCatchWithKnownError(
-            () => this._getApis(),
-            () => new ImportError(`Failed to connect or authenticate with target account '${this._config.targetAccountUrl}' - check url and token.`));
 
         try {
             if (this._config.targetProcessName) {

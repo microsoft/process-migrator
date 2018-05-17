@@ -1,6 +1,9 @@
 import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
 import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
 import * as WITInterfaces from "vso-node-api/interfaces/WorkItemTrackingInterfaces";
+import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
+import { IWorkItemTrackingProcessApi as WITProcessApi } from "vso-node-api/WorkItemTrackingProcessApi";
+import { IWorkItemTrackingApi as WITApi } from "vso-node-api/WorkItemTrackingApi";
 
 export enum LogLevel {
     error,
@@ -21,7 +24,7 @@ export interface IExportOptions {
 
 export interface ICommandLineOptions {
     mode: Modes;
-    overwriteProcessOnTarget : boolean;
+    overwriteProcessOnTarget: boolean;
     config: string;
 }
 
@@ -121,4 +124,10 @@ export interface ILogger {
     logWarning(message: string);
     logError(message: string);
     logException(error: Error);
+}
+
+export interface IRestClients {
+    witApi: WITApi;
+    witProcessApi: WITProcessApi;
+    witProcessDefinitionApi: WITProcessDefinitionApi;
 }

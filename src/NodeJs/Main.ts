@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from "fs";
+import { resolve } from "path";
 import { ProcesCommandLine, ProcessConfigurationFile } from "./ConfigurationProcessor";
-import { defaultEncoding, defaultProcessFilename } from "./Constants";
-import { ImportError, KnownError } from "./Errors";
-import { IConfigurationOptions, IProcessPayload, LogLevel, Modes } from "./Interfaces";
-import { InitializeFileLogger, logger } from "./Logger";
-import { ProcessExporter } from "./ProcessExporter";
-import { ProcessImporter } from "./ProcessImporter";
-import { Utility } from "./Utilities";
+import { defaultEncoding, defaultProcessFilename } from "../common/Constants";
+import { ImportError, KnownError } from "../common/Errors";
+import { IConfigurationOptions, IProcessPayload, LogLevel, Modes } from "../common/Interfaces";
+import { logger } from "../common/Logger";
+import { InitializeFileLogger } from "./FileLogger";
+import { ProcessExporter } from "../common/ProcessExporter";
+import { ProcessImporter } from "../common/ProcessImporter";
+import { Utility } from "../common/Utilities";
+import { Engine } from "../common/Engine";
+import { NodeJsUtility } from "./NodeJsUtilities";
+
 
 async function main() {
     const startTime = Date.now();
@@ -20,10 +25,10 @@ async function main() {
 
     // Initialize logger
     const maxLogLevel = configuration.options.logLevel ? LogLevel[configuration.options.logLevel] : LogLevel.information;
-    InitializeFileLogger(Utility.getLogFilePath(configuration.options), maxLogLevel);
+    InitializeFileLogger(NodeJsUtility.getLogFilePath(configuration.options), maxLogLevel);
 
     // Enable user cancellation
-    Utility.startCanellationListener();
+    NodeJsUtility.startCancellationListener();
 
     const mode = commandLineOptions.mode;
     const userOptions = configuration.options as IConfigurationOptions;
@@ -31,12 +36,16 @@ async function main() {
         // Export
         let processPayload: IProcessPayload;
         if (mode === Modes.export || mode === Modes.both) {
-            const sourceWebApi = Utility.getWebApi(configuration.sourceAccountUrl, configuration.sourceAccountToken);
-            const exporter: ProcessExporter = new ProcessExporter(sourceWebApi, configuration);
+            const sourceRestClients = await Engine.Task(() => NodeJsUtility.getRestClients(configuration.sourceAccountUrl, configuration.sourceAccountToken), `Get rest client on source account '${configuration.sourceAccountUrl}'`);
+            const exporter: ProcessExporter = new ProcessExporter(sourceRestClients, configuration);
             processPayload = await exporter.exportProcess();
+
+            const exportFilename = (configuration.options && configuration.options.processFilename) || defaultProcessFilename;
+            await Engine.Task(() => NodeJsUtility.writeJsonToFile(exportFilename, processPayload), "Write process payload to file")
+            logger.logInfo(`Export process completed successfully to '${resolve(exportFilename)}'.`);
         }
 
-        // IMport 
+        // Import 
         if (mode === Modes.both || mode === Modes.import) {
             if (mode === Modes.import) { // Read payload from file instead
                 const processFileName = (configuration.options && configuration.options.processFilename) || defaultProcessFilename;
@@ -44,12 +53,12 @@ async function main() {
                     throw new ImportError(`Process payload file '${processFileName}' does not exist.`)
                 }
                 logger.logVerbose(`Start read process payload from '${processFileName}'.`);
-                processPayload = JSON.parse(await readFileSync(processFileName, defaultEncoding));
+                processPayload = JSON.parse(readFileSync(processFileName, defaultEncoding));
                 logger.logVerbose(`Complete read process payload.`);
             }
 
-            const targetWebApi = Utility.getWebApi(configuration.targetAccountUrl, configuration.targetAccountToken);
-            const importer: ProcessImporter = new ProcessImporter(targetWebApi, configuration, commandLineOptions);
+            const targetRestClients = await Engine.Task(() => NodeJsUtility.getRestClients(configuration.targetAccountUrl, configuration.targetAccountToken), `Get rest client on target account '${configuration.targetAccountUrl}'`);
+            const importer: ProcessImporter = new ProcessImporter(targetRestClients, configuration, commandLineOptions);
             await importer.importProcess(processPayload);
         }
     }
@@ -66,7 +75,7 @@ async function main() {
     }
 
     const endTime = Date.now();
-    logger.logInfo(`Total elapsed time: '${(endTime-startTime)/1000}' seconds.`);
+    logger.logInfo(`Total elapsed time: '${(endTime - startTime) / 1000}' seconds.`);
     process.exit(0);
 }
 

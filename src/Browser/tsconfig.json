@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "outDir": "../../build/browser",
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "target": "es2017", // to not transpile async/await
+    "module": "amd",
+    "moduleResolution": "node",
+    "skipLibCheck": true, // to allow requirejs live together with node
+    "types": [
+      "vss-web-extension-sdk"
+    ]
+  },
+  "include": [
+    "**/*.ts",
+    "../common/**/*.ts",
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

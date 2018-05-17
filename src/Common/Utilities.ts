@@ -1,14 +1,10 @@
-import { format } from "path";
-import * as readline from "readline";
-import { isFunction } from "util";
-import * as vsts from "vso-node-api/WebApi";
 import * as WITInterfaces from "vso-node-api/interfaces/WorkItemTrackingInterfaces";
 import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
 import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
-import { defaultLogFileName } from "./Constants";
 import { KnownError } from "./Errors";
-import { IConfigurationOptions } from "./Interfaces";
 import { logger } from "./Logger";
+import { Modes, IConfigurationFile, LogLevel } from "./Interfaces";
+import * as url from "url";
 
 export class Utility {
     /** Convert from WITProcess FieldModel to WITProcessDefinitions FieldModel
@@ -127,7 +123,7 @@ export class Utility {
     }
 
     /**Convert a state result to state input
-    * @param state state result
+    * @param group
     */
     public static toUdpateStateDefinition(state: WITProcessInterfaces.WorkItemStateResultModel): WITProcessDefinitionsInterfaces.WorkItemStateInputModel {
         const updateState: WITProcessDefinitionsInterfaces.WorkItemStateInputModel = {
@@ -158,31 +154,6 @@ export class Utility {
         return replaceBehavior;
     }
 
-    public static startCanellationListener() {
-        const stdin = process.stdin;
-        if (!isFunction(stdin.setRawMode)) {
-            logger.logInfo(`We are running inside a TTY does not support RAW mode, you must cancel operation with CTRL+C`);
-            return;
-        }
-        stdin.setRawMode(true);
-        readline.emitKeypressEvents(stdin);
-        stdin.addListener("keypress", this._listener);
-        logger.logVerbose("Keyboard listener added");
-    }
-
-    public static didUserCancel(): boolean {
-        return Utility.isCancelled;
-    }
-
-    public static getLogFilePath(options: IConfigurationOptions): string {
-        return options.logFilename ? options.logFilename : defaultLogFileName;
-    }
-
-    public static getWebApi(accountUrl: string, PAT: string): vsts.WebApi {
-        const authHandlerSRC = vsts.getPersonalAccessTokenHandler(PAT);
-        return new vsts.WebApi(accountUrl, authHandlerSRC);
-    }
-
     public static handleKnownError(error: any) {
         if (error instanceof KnownError) { throw error; }
         logger.logException(error);
@@ -198,12 +169,48 @@ export class Utility {
         }
     }
 
-    private static _listener = (str: string, key: readline.Key) => {
-        if (key.name.toLocaleLowerCase() === "q") {
-            logger.logVerbose("Setting isCancelled to true.");
-            Utility.isCancelled = true;
+    public static validateConfiguration(configuration: IConfigurationFile, mode: Modes): boolean {
+        if (mode === Modes.export || mode === Modes.both) {
+            if (!configuration.sourceAccountUrl || !url.parse(configuration.sourceAccountUrl).host) {
+                logger.logError(`[Configuration validation] Missing or invalid source account url: '${configuration.sourceAccountUrl}'.`);
+                return false;
+            }
+            if (!configuration.sourceAccountToken) {
+                logger.logError(`[Configuration validation] Missing personal access token for source account.`);
+                return false;
+            }
+            if (!configuration.sourceProcessName) {
+                logger.logError(`[Configuration validation] Missing source process name.`);
+                return false;
+            }
         }
-    };
 
-    private static isCancelled = false;
+        if (mode === Modes.import || mode === Modes.both) {
+            if (!configuration.targetAccountUrl || !url.parse(configuration.targetAccountUrl).host) {
+                logger.logError(`[Configuration validation] Missing or invalid target account url: '${configuration.targetAccountUrl}'.`);
+                return false;
+            }
+            if (!configuration.targetAccountToken) {
+                logger.logError(`[Configuration validation] Personal access token for target account is empty.`);
+                return false;
+            }
+            if (configuration.options && configuration.options.overwritePicklist && (configuration.options.overwritePicklist !== true && configuration.options.overwritePicklist !== false)) {
+                logger.logError(`[Configuration validation] Option 'overwritePicklist' is not a valid boolean.`);
+                return false;
+            }
+        }
+
+        if (configuration.options && configuration.options.logLevel && LogLevel[configuration.options.logLevel] === undefined) {
+            logger.logError(`[Configuration validation] Option 'logLevel' is not a valid log level.`);
+            return false;
+        }
+
+        return true;
+    }
+
+    public static didUserCancel(): boolean {
+        return Utility.isCancelled;
+    }
+
+    protected static isCancelled = false;
 }

@@ -1,4 +1,4 @@
 src/
 output/
-tsconfig.json
 .vscode/
+build/browser/
