@@ -13,7 +13,6 @@ import { Utility } from "../common/Utilities";
 import { Engine } from "../common/Engine";
 import { NodeJsUtility } from "./NodeJsUtilities";
 
-
 async function main() {
     const startTime = Date.now();
 

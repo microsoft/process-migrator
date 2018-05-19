@@ -20,7 +20,7 @@ export function ProcesCommandLine(): ICommandLineOptions {
     const parsedArgs = minimist(process.argv, parseOptions);
 
     if (parsedArgs["h"]) {
-        logger.logInfo(`Usage: node ImportExportProcess.js --mode=<import/export/both> [--config=<configuration file path>] [--overwriteProcessOnTarget]`);
+        logger.logInfo(`Usage: pie [--mode=<both(default)/import/export>] [--config=<configuration file path>] [--overwriteProcessOnTarget]`);
         process.exit(0);
     }
 
@@ -52,9 +52,10 @@ export async function ProcessConfigurationFile(configFilename: string, mode: Mod
     // Load configuration file
     if (!existsSync(configFilename)) {
         logger.logError(`Cannot find configuration file '${configFilename}'`);
-        if (!existsSync(defaultConfigurationFilename)) {
-            writeFileSync(defaultConfigurationFilename, JSON.stringify(defaultConfiguration, null, 2));
-            logger.logInfo(`Generated default configuration file as '${defaultConfigurationFilename}'.`);
+        const normalizedConfiguraitonFilename = normalize(defaultConfigurationFilename);
+        if (!existsSync(normalizedConfiguraitonFilename)) {
+            writeFileSync(normalizedConfiguraitonFilename, defaultConfiguration);
+            logger.logInfo(`Generated configuration file as '${defaultConfigurationFilename}' , please fill in required information and retry.`);
         }
         process.exit(1);
     }
