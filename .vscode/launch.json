@@ -5,11 +5,11 @@
             "type": "node",
             "request": "launch",
             "name": "Launch process import/export ",
-            "program": "${workspaceFolder}/build/main.js",
+            "program": "${workspaceFolder}/build/nodejs/nodejs/main.js",
             "sourceMaps": true,
             "args": [
                 "--mode=both",
-                "--config=configuration.json",
+                "--config=output\\repro.json",
                 "--overwriteProcessOnTarget"
             ]
         }

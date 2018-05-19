@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync } from "fs";
-import { resolve } from "path";
+import { resolve, normalize } from "path";
 import { ProcesCommandLine, ProcessConfigurationFile } from "./ConfigurationProcessor";
 import { defaultEncoding, defaultProcessFilename } from "../common/Constants";
 import { ImportError, KnownError } from "../common/Errors";
@@ -40,7 +40,7 @@ async function main() {
             const exporter: ProcessExporter = new ProcessExporter(sourceRestClients, configuration);
             processPayload = await exporter.exportProcess();
 
-            const exportFilename = (configuration.options && configuration.options.processFilename) || defaultProcessFilename;
+            const exportFilename = (configuration.options && configuration.options.processFilename) || normalize(defaultProcessFilename);
             await Engine.Task(() => NodeJsUtility.writeJsonToFile(exportFilename, processPayload), "Write process payload to file")
             logger.logInfo(`Export process completed successfully to '${resolve(exportFilename)}'.`);
         }
@@ -48,7 +48,7 @@ async function main() {
         // Import 
         if (mode === Modes.both || mode === Modes.import) {
             if (mode === Modes.import) { // Read payload from file instead
-                const processFileName = (configuration.options && configuration.options.processFilename) || defaultProcessFilename;
+                const processFileName = (configuration.options && configuration.options.processFilename) || normalize(defaultProcessFilename);
                 if (!existsSync(processFileName)) {
                     throw new ImportError(`Process payload file '${processFileName}' does not exist.`)
                 }

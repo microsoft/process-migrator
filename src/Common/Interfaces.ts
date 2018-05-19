@@ -43,6 +43,9 @@ export interface IConfigurationOptions {
     logFilename?: string;
     processFilename?: string;
     overwritePicklist?: boolean;
+    continueOnRuleImportFailure?: boolean;
+    skipImportControlContributions?: boolean;
+    skipImportGroupOrPageContributions?: boolean;
 }
 
 export interface IImportConfiguration extends IConfigurationFile {

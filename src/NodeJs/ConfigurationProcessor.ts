@@ -1,10 +1,12 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
+import { normalize } from "path";
 import * as minimist from "minimist";
 import * as url from "url";
 import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramOverwriteProcessOnTarget } from "../common/Constants";
 import { IConfigurationFile, LogLevel, Modes, ICommandLineOptions } from "../common/Interfaces";
 import { logger } from "../common/Logger";
 import { Utility } from "../common/Utilities";
+import { parse as jsoncParse } from "jsonc-parser";
 
 export function ProcesCommandLine(): ICommandLineOptions {
     const parseOptions: minimist.Opts = {
@@ -22,7 +24,7 @@ export function ProcesCommandLine(): ICommandLineOptions {
         process.exit(0);
     }
 
-    const configFileName = parsedArgs[paramConfig] || defaultConfigurationFilename;
+    const configFileName = parsedArgs[paramConfig] || normalize(defaultConfigurationFilename);
 
     const userSpecifiedMode = parsedArgs[paramMode] as string;
     let mode;
@@ -38,12 +40,12 @@ export function ProcesCommandLine(): ICommandLineOptions {
         mode = Modes.both;
     }
 
-    const ret = {}; 
+    const ret = {};
     ret[paramMode] = mode;
     ret[paramConfig] = configFileName;
     ret[paramOverwriteProcessOnTarget] = !!parsedArgs[paramOverwriteProcessOnTarget];
 
-    return <ICommandLineOptions> ret;
+    return <ICommandLineOptions>ret;
 }
 
 export async function ProcessConfigurationFile(configFilename: string, mode: Modes): Promise<IConfigurationFile> {
@@ -56,8 +58,8 @@ export async function ProcessConfigurationFile(configFilename: string, mode: Mod
         }
         process.exit(1);
     }
-   
-    const configuration = JSON.parse(await readFileSync(configFilename, defaultEncoding)) as IConfigurationFile;
+
+    const configuration = jsoncParse(readFileSync(configFilename, defaultEncoding)) as IConfigurationFile;
     if (!Utility.validateConfiguration(configuration, mode)) {
         process.exit(1);
     }

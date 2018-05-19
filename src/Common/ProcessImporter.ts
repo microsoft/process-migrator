@@ -8,7 +8,7 @@ import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi_NOREQ
 import { IWorkItemTrackingProcessApi as WITProcessApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingProcessApi";
 import { IWorkItemTrackingApi as WITApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingApi";
 
-import { PICKLIST_NO_ACTION, regexRemoveHypen } from "./Constants";
+import { PICKLIST_NO_ACTION } from "./Constants";
 import { Engine } from "./Engine";
 import { ImportError, ValidationError } from "./Errors";
 import { ICommandLineOptions, IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITLayout, IWITRules, IWITStates, IRestClients } from "./Interfaces";
@@ -188,7 +188,11 @@ export class ProcessImporter {
 
     private async _importPage(targetLayout: WITProcessDefinitionsInterfaces.FormLayout, witLayout: IWITLayout, page: WITProcessDefinitionsInterfaces.Page, payload: IProcessPayload) {
         if (!page) {
-            throw new ImportError(`Encourtered null page in work item type '${witLayout.workItemTypeRefName}'`);
+            throw new ImportError(`Encountered null page in work item type '${witLayout.workItemTypeRefName}'`);
+        }
+
+        if (page.isContribution && !this._config.options.skipImportGroupOrPageContributions !== false) {
+            // skip import page contriubtion unless user explicitly asks so
         }
 
         let newPage: WITProcessDefinitionsInterfaces.Page; //The newly created page, contains the pageId required to create groups.
@@ -213,6 +217,10 @@ export class ProcessImporter {
         for (const section of page.sections) {
             for (const group of section.groups) {
                 let newGroup: WITProcessDefinitionsInterfaces.Group;
+
+                if (group.isContribution === true && !this._config.options.skipImportGroupOrPageContributions !== false) {
+                    // skip import group contriubtion unless user explicitly asks so
+                }
 
                 if (group.controls.length !== 0 && group.controls[0].controlType === "HtmlFieldControl") {
                     //Handle groups with HTML Controls
@@ -272,20 +280,27 @@ export class ProcessImporter {
                             try {
                                 let createControl: WITProcessDefinitionsInterfaces.Control = Utility.toCreateControl(control);
 
+                                if (control.controlType === "WebpageControl" || (control.isContribution === true && this._config.options.skipImportControlContributions)) {
+                                    // Skip web page control for now since not supported in inherited process.
+                                    continue;
+                                }
+
                                 if (control.inherited) {
                                     if (control.overridden) {
                                         //edit
-                                        await this._witProcessDefinitionApi.editControl(createControl, payload.process.typeId, witLayout.workItemTypeRefName, group.id, control.id);
+                                        await Engine.Task(() => this._witProcessDefinitionApi.editControl(createControl, payload.process.typeId, witLayout.workItemTypeRefName, group.id, control.id),
+                                            `Edit control '${control.id}' in group '${group.id}' in page '${page.id}' in work item type '${witLayout.workItemTypeRefName}'.`);
                                     }
                                 }
                                 else {
                                     //create
-                                    await this._witProcessDefinitionApi.addControlToGroup(createControl, payload.process.typeId, witLayout.workItemTypeRefName, group.id);
+                                    await Engine.Task(() => this._witProcessDefinitionApi.addControlToGroup(createControl, payload.process.typeId, witLayout.workItemTypeRefName, group.id),
+                                        `Create control '${control.id}' in group '${group.id}' in page '${page.id}' in work item type '${witLayout.workItemTypeRefName}'.`);
                                 }
                             }
                             catch (error) {
                                 Utility.handleKnownError(error);
-                                throw new ImportError(`Unable to add '${control}' control to page '${page}' in '${witLayout.workItemTypeRefName}'. ${error}`);
+                                throw new ImportError(`Unable to add '${control.id}' control to group '${group.id}' in page '${page.id}' in '${witLayout.workItemTypeRefName}'. ${error}`);
                             }
                         }
                     }
@@ -304,7 +319,9 @@ export class ProcessImporter {
                 () => this._witProcessDefinitionApi.getFormLayout(payload.process.typeId, witLayoutEntry.workItemTypeRefName),
                 `Get layout on target process for work item type '${witLayoutEntry.workItemTypeRefName}'`);
             for (const page of witLayoutEntry.layout.pages) {
-                await this._importPage(targetLayout, witLayoutEntry, page, payload);
+                if (page.pageType === WITProcessDefinitionsInterfaces.PageType.Custom) {
+                    await this._importPage(targetLayout, witLayoutEntry, page, payload);
+                }
             }
         }
     }
@@ -329,7 +346,7 @@ export class ProcessImporter {
                 const existingStates: WITProcessDefinitionsInterfaces.WorkItemStateResultModel[] = targetWITStates.filter(targetState => sourceState.name === targetState.name);
                 if (existingStates.length === 0) {  // does not exist on target
                     const createdState = await Engine.Task(
-                        () => this._witProcessDefinitionApi.createStateDefinition(sourceState, payload.process.typeId, witStateEntry.workItemTypeRefName),
+                        () => this._witProcessDefinitionApi.createStateDefinition(Utility.toCreateOrUpdateStateDefinition(sourceState), payload.process.typeId, witStateEntry.workItemTypeRefName),
                         `Create state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
                     if (!createdState || !createdState.id) {
                         throw new ImportError(`Unable to create state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, server returned empty result or id.`);
@@ -349,7 +366,7 @@ export class ProcessImporter {
                     if (sourceState.color !== existingState.color || sourceState.stateCategory !== existingState.stateCategory || sourceState.name !== existingState.name) {
                         // Inherited state can be edited in custom work item types.
                         const updatedState = await Engine.Task(
-                            () => this._witProcessDefinitionApi.updateStateDefinition(Utility.toUdpateStateDefinition(sourceState), payload.process.typeId, witStateEntry.workItemTypeRefName, existingState.id),
+                            () => this._witProcessDefinitionApi.updateStateDefinition(Utility.toCreateOrUpdateStateDefinition(sourceState), payload.process.typeId, witStateEntry.workItemTypeRefName, existingState.id),
                             `Update state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
                         if (!updatedState || updatedState.name !== sourceState.name) {
                             throw new ImportError(`Unable to update state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type, server returned empty result, id or state is not hidden.`);
@@ -377,7 +394,6 @@ export class ProcessImporter {
         }
     }
 
-
     private async _importStates(payload: IProcessPayload): Promise<void> {
         for (const witStateEntry of payload.states) {
             await this._importWITStates(witStateEntry, payload);
@@ -395,8 +411,13 @@ export class ProcessImporter {
             }
         }
         catch (error) {
-            Utility.handleKnownError(error);
-            throw new ImportError(`Unable to create rule '${rule.id}' in work item type '${witRulesEntry.workItemTypeRefName}', see logs for details.`);
+            if (this._config.options.continueOnRuleImportFailure === true) {
+                logger.logWarning(`Failed to import rule below, continue importing rest of process.\r\n:Error:${error}\r\n${JSON.stringify(rule, null, 2)}`);
+            }
+            else {
+                Utility.handleKnownError(error);
+                throw new ImportError(`Unable to create rule '${rule.id}' in work item type '${witRulesEntry.workItemTypeRefName}', see logs for details.`);
+            }
         }
     }
 
@@ -427,7 +448,7 @@ export class ProcessImporter {
                     const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = Utility.toCreateBehavior(behavior);
                     // Use a random name to avoid conflict on scenarios involving a name swap 
                     behaviorIdToRealNameBehavior[behavior.id] = Utility.toReplaceBehavior(behavior);
-                    createBehavior.name = Guid.create().toString().replace(regexRemoveHypen, "");
+                    createBehavior.name = Utility.createGuidWithoutHyphen();
                     const createdBehavior = await Engine.Task(
                         () => this._witProcessDefinitionApi.createBehavior(createBehavior, payload.process.typeId),
                         `Create behavior '${behavior.id}' with fake name '${behavior.name}'`);
@@ -438,7 +459,7 @@ export class ProcessImporter {
                 else {
                     const replaceBehavior: WITProcessDefinitionsInterfaces.BehaviorReplaceModel = Utility.toReplaceBehavior(behavior);
                     behaviorIdToRealNameBehavior[behavior.id] = Utility.toReplaceBehavior(behavior);
-                    replaceBehavior.name = Guid.create().toString().replace(regexRemoveHypen, "");
+                    replaceBehavior.name = Utility.createGuidWithoutHyphen();
                     const replacedBehavior = await Engine.Task(
                         () => this._witProcessDefinitionApi.replaceBehavior(replaceBehavior, payload.process.typeId, behavior.id),
                         `Replace behavior '${behavior.id}' with fake name '${behavior.name}'`);

@@ -10,9 +10,9 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you can upload
 ## Run
 
 - Install npm if haven't - [link](https://www.npmjs.com/get-npm)
-- Install this package through `npm install vsts-process-import-export -g` 
+- Install this package through `npm install process-import-export -g` 
 - Create a configuration.json, see [doc section](#documentation) for explanation on details 
-- Run `vstspie --mode=<import/export/both> [--config=<your-configuration-file-path>] [--overwriteProcessOnTarget]`
+- Run `pie --mode=<import/export/both> [--config=<your-configuration-file-path>] [--overwriteProcessOnTarget]`
   
 ## Contribute
 

@@ -1,6 +1,6 @@
 import * as vsts from "vso-node-api/WebApi";
 import { existsSync, writeFileSync } from "fs";
-import { dirname } from "path";
+import { dirname, normalize } from "path";
 import { sync as mkdirpSync } from "mkdirp";
 import * as readline from "readline";
 import { isFunction } from "util";
@@ -33,7 +33,7 @@ export class NodeJsUtility extends Utility {
     }
 
     public static getLogFilePath(options: IConfigurationOptions): string {
-        return options.logFilename ? options.logFilename : defaultLogFileName;
+        return options.logFilename ? options.logFilename : normalize(defaultLogFileName);
     }
 
     public static async getRestClients(accountUrl: string, PAT: string): Promise<IRestClients> {

@@ -5,6 +5,8 @@ import { KnownError } from "./Errors";
 import { logger } from "./Logger";
 import { Modes, IConfigurationFile, LogLevel } from "./Interfaces";
 import * as url from "url";
+import { Guid } from "guid-typescript";
+import { regexRemoveHypen } from "./Constants";
 
 export class Utility {
     /** Convert from WITProcess FieldModel to WITProcessDefinitions FieldModel
@@ -56,7 +58,7 @@ export class Utility {
             description: processModel.description,
             name: processModel.name,
             parentProcessTypeId: processModel.properties.parentProcessTypeId,
-            referenceName: processModel.referenceName
+            referenceName: Utility.createGuidWithoutHyphen() // Reference name does not really matter since we already have typeId
         };
         return createModel;
     }
@@ -64,7 +66,7 @@ export class Utility {
     /**Convert group from getLayout group interface to WITProcessDefinitionsInterfaces.Group
      * @param group
     */
-    public static toCreateGroup(group: any/*TODO: Change this type, not any*/): WITProcessDefinitionsInterfaces.Group {
+    public static toCreateGroup(group: WITProcessDefinitionsInterfaces.Group): WITProcessDefinitionsInterfaces.Group {
         let createGroup: WITProcessDefinitionsInterfaces.Group = {
             id: group.id,
             inherited: group.inherited,
@@ -72,8 +74,8 @@ export class Utility {
             isContribution: group.isContribution,
             visible: group.visible,
             controls: null,
-            contribution: null,
-            height: null,
+            contribution: group.contribution,
+            height: group.height,
             order: null,
             overridden: null
         }
@@ -83,7 +85,7 @@ export class Utility {
     /**Convert control from getLayout control interface to WITProcessDefinitionsInterfaces.Control
      * @param control
     */
-    public static toCreateControl(control: any/*TODO: Change this type, not any*/): WITProcessDefinitionsInterfaces.Control {
+    public static toCreateControl(control: WITProcessDefinitionsInterfaces.Control): WITProcessDefinitionsInterfaces.Control {
         let createControl: WITProcessDefinitionsInterfaces.Control = {
             id: control.id,
             inherited: control.inherited,
@@ -94,8 +96,8 @@ export class Utility {
             metadata: control.metadata,
             visible: control.visible,
             isContribution: control.isContribution,
-            contribution: null,
-            height: null,
+            contribution: control.contribution,
+            height: control.height,
             order: null,
             overridden: null
         }
@@ -105,17 +107,17 @@ export class Utility {
     /**Convert page from getLayout page interface to WITProcessDefinitionsInterfaces.Page
       * @param control
      */
-    public static toCreatePage(page: any/*TODO: Change this type, not any*/): WITProcessDefinitionsInterfaces.Page {
+    public static toCreatePage(page: WITProcessDefinitionsInterfaces.Page): WITProcessDefinitionsInterfaces.Page {
         let createPage: WITProcessDefinitionsInterfaces.Page = {
             id: page.id,
             inherited: page.inherited,
             label: page.label,
             pageType: page.pageType,
-            locked: page.loacked,
+            locked: page.locked,
             visible: page.visible,
             isContribution: page.isContribution,
-            sections: null,//yeah??
-            contribution: null,
+            sections: null,
+            contribution: page.contribution,
             order: null,
             overridden: null
         }
@@ -125,7 +127,7 @@ export class Utility {
     /**Convert a state result to state input
     * @param group
     */
-    public static toUdpateStateDefinition(state: WITProcessInterfaces.WorkItemStateResultModel): WITProcessDefinitionsInterfaces.WorkItemStateInputModel {
+    public static toCreateOrUpdateStateDefinition(state: WITProcessInterfaces.WorkItemStateResultModel): WITProcessDefinitionsInterfaces.WorkItemStateInputModel {
         const updateState: WITProcessDefinitionsInterfaces.WorkItemStateInputModel = {
             color: state.color,
             name: state.name,
@@ -198,6 +200,14 @@ export class Utility {
                 logger.logError(`[Configuration validation] Option 'overwritePicklist' is not a valid boolean.`);
                 return false;
             }
+            if (configuration.options && configuration.options.continueOnRuleImportFailure && (configuration.options.continueOnRuleImportFailure !== true && configuration.options.continueOnRuleImportFailure !== false)) {
+                logger.logError(`[Configuration validation] Option 'continueOnRuleImportFailure' is not a valid boolean.`);
+                return false;
+            }
+            if (configuration.options && configuration.options.skipImportControlContributions && (configuration.options.skipImportControlContributions !== true && configuration.options.skipImportControlContributions !== false)) {
+                logger.logError(`[Configuration validation] Option 'skipImportControlContributions' is not a valid boolean.`);
+                return false;
+            }
         }
 
         if (configuration.options && configuration.options.logLevel && LogLevel[configuration.options.logLevel] === undefined) {
@@ -210,6 +220,10 @@ export class Utility {
 
     public static didUserCancel(): boolean {
         return Utility.isCancelled;
+    }
+
+    public static createGuidWithoutHyphen(): string {
+        return Guid.create().toString().replace(regexRemoveHypen, "");
     }
 
     protected static isCancelled = false;
