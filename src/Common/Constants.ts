@@ -1,27 +1,27 @@
 export const PICKLIST_NO_ACTION = "PICKLIST_NO_ACTION";
 export const defaultEncoding = "utf-8";
 export const defaultConfigurationFilename = "configuration.json";
-export const defaultLogFileName = "output\\pie.log";
+export const defaultLogFileName = "output\\processMigrator.log";
 export const defaultProcessFilename = "output\\process.json";
 export const paramMode = "mode";
 export const paramConfig = "config";
 export const paramOverwriteProcessOnTarget = "overwriteProcessOnTarget";
 export const defaultConfiguration =
     `{
-        "sourceAccountUrl": "<Source account url>",
-        "sourceAccountToken": "<Source account personal access token>",
-        "targetAccountUrl": "<Target account url>",
-        "targetAccountToken": "<Target account personal access token>",
-        "sourceProcessName": "Process name for export, ignored in import only mode, required in export/both mode",
-        // "targetProcessName": "Set to override process name on import",
+        "sourceAccountUrl": "Required in 'export'/'migrate' mode, source account url.",
+        "sourceAccountToken": "!!TREAT THIS AS PASSWORD!! Required in 'export'/'migrate' mode, personal access token for source account.",
+        "targetAccountUrl": "Required in 'import'/'migrate' mode, target account url.",
+        "targetAccountToken": "!!TREAT THIS AS PASSWORD!! Required in 'import'/'migrate' mode, personal access token for target account.",
+        "sourceProcessName": "Required in 'export'/'migrate' mode, source process name.",
+        // "targetProcessName": "Optional, set to override process name in 'import'/'migrate' mode.",
         "options": {
-            // "processFilename": "Default is 'output/process.json', set to override default export file name",
-            // "logLevel": "Default is information, set to override log level, possible values are verbose/information/warning/error",
-            // "logFilename": "Default is 'output/pie.log', set to override default log file name",
-            // "continueOnRuleImportFailure": "Default is false, Set true to continue import on failure importing rules, warning will still be provided"
-            // "skipImportControlContributions": "Default is false, Set true to skip import control contributions on work item form."
-            // "skipImportGroupOrPageContributions": "Default is true, Set false to allow import group/page contributions on work item form. This should only be used when you want to hide contribution group/page."
-            // "overwritePicklist": "Default is false, Set true to overwrite picklist if exist on target account."
+            // "processFilename": "Required in 'import' mode, optional in 'export'/'migrate' mode to override default (./output/process.json).",
+            // "logLevel":"Optional, default as 'Information'. Logs at or higher than this level are outputed to console and rest in log file. Possiblee values are 'Verbose'/'Information'/'Warning'/'Error'.",
+            // "logFilename":"Optional, default as 'output/processMigrator.log' - Set to override default log file name.",
+            // // "overwritePicklist": "Optional, default is 'false'. Set true to overwrite picklist if exists on target. Import will fail if picklist exists but different from source.",
+            // "continueOnRuleImportFailure": "Optional, default is 'false', set true to continue import on failure importing rules, warning will be provided.",
+            // "skipImportControlContributions": "Optional, default is 'false', set true to skip import control contributions on work item form.",
+            // "skipImportGroupOrPageContributions": "Optional, default is 'true', set false to import group/page contributions on work item form. This should only be used when you want to hide contribution group/page."
         }
     }`;
-export const regexRemoveHypen = new RegExp("-","g");
+export const regexRemoveHypen = new RegExp("-", "g");

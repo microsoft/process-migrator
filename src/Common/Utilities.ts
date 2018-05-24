@@ -172,7 +172,7 @@ export class Utility {
     }
 
     public static validateConfiguration(configuration: IConfigurationFile, mode: Modes): boolean {
-        if (mode === Modes.export || mode === Modes.both) {
+        if (mode === Modes.export || mode === Modes.migrate) {
             if (!configuration.sourceAccountUrl || !url.parse(configuration.sourceAccountUrl).host) {
                 logger.logError(`[Configuration validation] Missing or invalid source account url: '${configuration.sourceAccountUrl}'.`);
                 return false;
@@ -187,7 +187,7 @@ export class Utility {
             }
         }
 
-        if (mode === Modes.import || mode === Modes.both) {
+        if (mode === Modes.import || mode === Modes.migrate) {
             if (!configuration.targetAccountUrl || !url.parse(configuration.targetAccountUrl).host) {
                 logger.logError(`[Configuration validation] Missing or invalid target account url: '${configuration.targetAccountUrl}'.`);
                 return false;
@@ -202,6 +202,14 @@ export class Utility {
             }
             if (configuration.options && configuration.options.continueOnRuleImportFailure && (configuration.options.continueOnRuleImportFailure !== true && configuration.options.continueOnRuleImportFailure !== false)) {
                 logger.logError(`[Configuration validation] Option 'continueOnRuleImportFailure' is not a valid boolean.`);
+                return false;
+            }
+            if (configuration.options && configuration.options.continueOnIdentityDefaultValueFailure && (configuration.options.continueOnIdentityDefaultValueFailure !== true && configuration.options.continueOnIdentityDefaultValueFailure !== false)) {
+                logger.logError(`[Configuration validation] Option 'continueOnFieldImportDefaultValueFailure' is not a valid boolean.`);
+                return false;
+            }
+            if (configuration.options && configuration.options.skipImportGroupOrPageContributions && (configuration.options.skipImportGroupOrPageContributions !== true && configuration.options.skipImportGroupOrPageContributions !== false)) {
+                logger.logError(`[Configuration validation] Option 'skipImportGroupOrPageContributions' is not a valid boolean.`);
                 return false;
             }
             if (configuration.options && configuration.options.skipImportControlContributions && (configuration.options.skipImportControlContributions !== true && configuration.options.skipImportControlContributions !== false)) {

@@ -1,6 +1,6 @@
 {
-  "name": "process-import-export",
-  "version": "0.9.2",
+  "name": "process-migrator",
+  "version": "0.9.3",
   "description": "Proces import/export Node.js application",
   "main": "",
   "bin": {
@@ -16,13 +16,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/process-import-export"
+    "url": "https://github.com/Microsoft/process-migrator"
   },
   "keywords": [
     "vsts",
     "process",
     "import",
     "export",
+    "migrate",
+    "migrator",
     "inherited"
   ],
   "author": "Microsoft",

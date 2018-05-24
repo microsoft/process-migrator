@@ -34,7 +34,7 @@ async function main() {
     try {
         // Export
         let processPayload: IProcessPayload;
-        if (mode === Modes.export || mode === Modes.both) {
+        if (mode === Modes.export || mode === Modes.migrate) {
             const sourceRestClients = await Engine.Task(() => NodeJsUtility.getRestClients(configuration.sourceAccountUrl, configuration.sourceAccountToken), `Get rest client on source account '${configuration.sourceAccountUrl}'`);
             const exporter: ProcessExporter = new ProcessExporter(sourceRestClients, configuration);
             processPayload = await exporter.exportProcess();
@@ -45,7 +45,7 @@ async function main() {
         }
 
         // Import 
-        if (mode === Modes.both || mode === Modes.import) {
+        if (mode === Modes.import || mode == Modes.migrate) {
             if (mode === Modes.import) { // Read payload from file instead
                 const processFileName = (configuration.options && configuration.options.processFilename) || normalize(defaultProcessFilename);
                 if (!existsSync(processFileName)) {

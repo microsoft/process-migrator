@@ -20,7 +20,7 @@ export function ProcesCommandLine(): ICommandLineOptions {
     const parsedArgs = minimist(process.argv, parseOptions);
 
     if (parsedArgs["h"]) {
-        logger.logInfo(`Usage: pie [--mode=<both(default)/import/export>] [--config=<configuration file path>] [--overwriteProcessOnTarget]`);
+        logger.logInfo(`Usage: processMigrator [--mode=<migrate(default)import/export> [--config=<your-configuration-file-path>]`);
         process.exit(0);
     }
 
@@ -32,12 +32,11 @@ export function ProcesCommandLine(): ICommandLineOptions {
         switch (userSpecifiedMode.toLocaleLowerCase()) {
             case Modes[Modes.export]: mode = Modes.export; break;
             case Modes[Modes.import]: mode = Modes.import; break;
-            case Modes[Modes.both]: mode = Modes.both; break;
-            default: logger.logError(`Invalid mode argument, allowed values are 'import','export' and 'both'.`); process.exit(1);
+            case Modes[Modes.migrate]: mode = Modes.migrate; break;
+            default: logger.logError(`Invalid mode argument, allowed values are 'import','export' and 'migrate'.`); process.exit(1);
         }
     } else {
-        // Default to both import/export
-        mode = Modes.both;
+        mode = Modes.migrate;
     }
 
     const ret = {};
@@ -55,7 +54,7 @@ export async function ProcessConfigurationFile(configFilename: string, mode: Mod
         const normalizedConfiguraitonFilename = normalize(defaultConfigurationFilename);
         if (!existsSync(normalizedConfiguraitonFilename)) {
             writeFileSync(normalizedConfiguraitonFilename, defaultConfiguration);
-            logger.logInfo(`Generated configuration file as '${defaultConfigurationFilename}' , please fill in required information and retry.`);
+            logger.logInfo(`Generated configuration file as '${defaultConfigurationFilename}', please fill in required information and retry.`);
         }
         process.exit(1);
     }

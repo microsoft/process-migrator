@@ -96,7 +96,6 @@ export class ProcessImporter {
         const fieldsToCreate: WITProcessDefinitionsInterfaces.FieldModel[] = await Engine.Task(() => this._getFieldsToCreate(payload), "Get fields to be created on target process");
 
         if (fieldsToCreate.length > 0) {
-            const createFieldPromises: Promise<any>[] = [];
             for (const field of fieldsToCreate) {
                 try {
                     const fieldCreated = await Engine.Task(() => this._witProcessDefinitionApi.createField(field, payload.process.typeId), `Create field '${field.id}'`);
@@ -116,18 +115,39 @@ export class ProcessImporter {
         }
     }
 
-
     /**Add fields at a Work Item Type scope*/
     private async _addFieldsToWorkItemTypes(payload: IProcessPayload): Promise<void> {
         for (const entry of payload.workItemTypeFields) {
             for (const field of entry.fields) {
                 try {
+                    // Make separate call to set default value on identity field allow failover 
+                    const defaultValue = field.defaultValue;
+                    field.defaultValue = field.type === WITProcessDefinitionsInterfaces.FieldType.Identity ? null : defaultValue;
+
                     const fieldAdded = await Engine.Task(
                         () => this._witProcessDefinitionApi.addFieldToWorkItemType(field, payload.process.typeId, entry.workItemTypeRefName),
                         `Add field '${field.referenceName}' to work item type '${entry.workItemTypeRefName}'`);
 
                     if (!fieldAdded || fieldAdded.referenceName !== field.referenceName) {
                         throw new ImportError(`Failed to add field '${field.referenceName}' to work item type '${entry.workItemTypeRefName}', server returned empty result or reference name does not match.`);
+                    }
+
+                    if (defaultValue) {
+                        field.defaultValue = defaultValue;
+                        try {
+                            const fieldAddedWithDefaultValue = await Engine.Task(
+                                () => this._witProcessDefinitionApi.addFieldToWorkItemType(field, payload.process.typeId, entry.workItemTypeRefName),
+                                `Updated field '${field.referenceName}' with default value to work item type '${entry.workItemTypeRefName}'`);
+                        }
+                        catch (error) {
+                            if (this._config.options && this._config.options.continueOnIdentityDefaultValueFailure === true) {
+                                logger.logWarning(`Failed to set field '${field.referenceName}' with default value '${JSON.stringify(defaultValue, null, 2)}' to work item type '${entry.workItemTypeRefName}', continue because 'skipImportControlContributions' is set to true`);
+                            }
+                            else {
+                                logger.logException(error);
+                                throw new ImportError(`Failed to set field '${field.referenceName}' with default value '${JSON.stringify(defaultValue, null, 2)}' to work item type '${entry.workItemTypeRefName}'. You may set skipImportControlContributions = true in configuraiton file to continue.`);
+                            }
+                        }
                     }
                 }
                 catch (error) {
