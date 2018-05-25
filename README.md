@@ -14,7 +14,7 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 
    Just run ```processMigrator``` will create the file if not exist.
 
-   ##### ![](http://placehold.it/70x30/f03c15/000000?text=WARNING) CONFIGURATION FILE HAS PAT, RIGHT PROTECT IT!
+   ##### ![](https://imgplaceholder.com/100x17/cccccc/fe2904?text=WARNING&font-size=15) CONFIGURATION FILE HAS PAT, RIGHT PROTECT IT !
 - Run `processMigrator [--mode=<migrate(default)import/export> [--config=<your-configuration-file-path>]`
   
 ## Contribute
