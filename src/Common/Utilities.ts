@@ -208,12 +208,8 @@ export class Utility {
                 logger.logError(`[Configuration validation] Option 'continueOnFieldImportDefaultValueFailure' is not a valid boolean.`);
                 return false;
             }
-            if (configuration.options && configuration.options.skipImportGroupOrPageContributions && (configuration.options.skipImportGroupOrPageContributions !== true && configuration.options.skipImportGroupOrPageContributions !== false)) {
-                logger.logError(`[Configuration validation] Option 'skipImportGroupOrPageContributions' is not a valid boolean.`);
-                return false;
-            }
-            if (configuration.options && configuration.options.skipImportControlContributions && (configuration.options.skipImportControlContributions !== true && configuration.options.skipImportControlContributions !== false)) {
-                logger.logError(`[Configuration validation] Option 'skipImportControlContributions' is not a valid boolean.`);
+            if (configuration.options && configuration.options.skipImportFormContributions && (configuration.options.skipImportFormContributions !== true && configuration.options.skipImportFormContributions !== false)) {
+                logger.logError(`[Configuration validation] Option 'skipImportFormContributions' is not a valid boolean.`);
                 return false;
             }
         }

@@ -1,10 +1,10 @@
 {
   "name": "process-migrator",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Proces import/export Node.js application",
   "main": "",
   "bin": {
-    "pie": "build/nodejs/nodejs/main.js"
+    "process-migrator": "build/nodejs/nodejs/main.js"
   },
   "engines": {
     "node": ">=8.11.2"

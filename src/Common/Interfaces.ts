@@ -45,12 +45,7 @@ export interface IConfigurationOptions {
     overwritePicklist?: boolean;
     continueOnRuleImportFailure?: boolean;
     continueOnIdentityDefaultValueFailure?: boolean;
-    skipImportControlContributions?: boolean;
-    skipImportGroupOrPageContributions?: boolean;
-}
-
-export interface IImportConfiguration extends IConfigurationFile {
-    removeProcessOnTarget?: boolean;
+    skipImportFormContributions?: boolean;
 }
 
 export interface IProcessPayload {

@@ -211,8 +211,9 @@ export class ProcessImporter {
             throw new ImportError(`Encountered null page in work item type '${witLayout.workItemTypeRefName}'`);
         }
 
-        if (page.isContribution && !this._config.options.skipImportGroupOrPageContributions !== false) {
+        if (page.isContribution && this._config.options.skipImportFormContributions === true) {
             // skip import page contriubtion unless user explicitly asks so
+            return;
         }
 
         let newPage: WITProcessDefinitionsInterfaces.Page; //The newly created page, contains the pageId required to create groups.
@@ -238,8 +239,9 @@ export class ProcessImporter {
             for (const group of section.groups) {
                 let newGroup: WITProcessDefinitionsInterfaces.Group;
 
-                if (group.isContribution === true && !this._config.options.skipImportGroupOrPageContributions !== false) {
+                if (group.isContribution === true && this._config.options.skipImportFormContributions === true) {
                     // skip import group contriubtion unless user explicitly asks so
+                    continue;
                 }
 
                 if (group.controls.length !== 0 && group.controls[0].controlType === "HtmlFieldControl") {
@@ -300,7 +302,7 @@ export class ProcessImporter {
                             try {
                                 let createControl: WITProcessDefinitionsInterfaces.Control = Utility.toCreateControl(control);
 
-                                if (control.controlType === "WebpageControl" || (control.isContribution === true && this._config.options.skipImportControlContributions)) {
+                                if (control.controlType === "WebpageControl" || (control.isContribution === true && this._config.options.skipImportFormContributions === true)) {
                                     // Skip web page control for now since not supported in inherited process.
                                     continue;
                                 }

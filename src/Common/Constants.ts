@@ -15,13 +15,12 @@ export const defaultConfiguration =
         "sourceProcessName": "Required in 'export'/'migrate' mode, source process name.",
         // "targetProcessName": "Optional, set to override process name in 'import'/'migrate' mode.",
         "options": {
-            // "processFilename": "Required in 'import' mode, optional in 'export'/'migrate' mode to override default (./output/process.json).",
+            // "processFilename": "Required in 'import' mode, optional in 'export'/'migrate' mode to override default value './output/process.json'.",
             // "logLevel":"Optional, default as 'Information'. Logs at or higher than this level are outputed to console and rest in log file. Possiblee values are 'Verbose'/'Information'/'Warning'/'Error'.",
             // "logFilename":"Optional, default as 'output/processMigrator.log' - Set to override default log file name.",
-            // // "overwritePicklist": "Optional, default is 'false'. Set true to overwrite picklist if exists on target. Import will fail if picklist exists but different from source.",
+            // "overwritePicklist": "Optional, default is 'false'. Set true to overwrite picklist if exists on target. Import will fail if picklist exists but different from source.",
             // "continueOnRuleImportFailure": "Optional, default is 'false', set true to continue import on failure importing rules, warning will be provided.",
-            // "skipImportControlContributions": "Optional, default is 'false', set true to skip import control contributions on work item form.",
-            // "skipImportGroupOrPageContributions": "Optional, default is 'true', set false to import group/page contributions on work item form. This should only be used when you want to hide contribution group/page."
+            // "skipImportFormContributions": "Optional, default is 'false', set true to skip import control/group/form contributions on work item form.",
         }
     }`;
 export const regexRemoveHypen = new RegExp("-", "g");

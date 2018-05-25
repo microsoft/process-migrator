@@ -4,13 +4,10 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch process import/export ",
+            "name": "Launch process migrate",
             "program": "${workspaceFolder}/build/nodejs/nodejs/main.js",
             "sourceMaps": true,
             "args": [
-                "--mode=both",
-                "--config=output\\repro.json",
-                "--overwriteProcessOnTarget"
             ]
         }
     ]

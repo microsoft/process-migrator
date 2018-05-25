@@ -38,21 +38,19 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
     "sourceProcessName": "Required in 'export'/'migrate' mode, source process name.",
     "targetProcessName": "Optional, set to override process name in 'import'/'migrate' mode.",
     "options": {
-        "processFilename": "Required in 'import' mode, optional in 'export'/'migrate' mode to override default (./output/process.json).",
+        "processFilename": "Required in 'import' mode, optional in 'export'/'migrate' mode to override default value './output/process.json'.",
         "logLevel":"Optional, default as 'Information'. Logs at or higher than this level are outputed to console and rest in log file. Possiblee values are 'Verbose'/'Information'/'Warning'/'Error'.",
         "logFilename":"Optional, default as 'output/processMigrator.log' - Set to override default log file name.",
         "overwritePicklist": "Optional, default is 'false'. Set true to overwrite picklist if exists on target. Import will fail if picklist exists but different from source.",
         "continueOnRuleImportFailure": "Optional, default is 'false', set true to continue import on failure importing rules, warning will be provided.",
-        "skipImportControlContributions": "Optional, default is 'false', set true to skip import control contributions on work item form.",
-        "skipImportGroupOrPageContributions": "Optional, default is 'true', set false to import group/page contributions on work item form. This should only be used when you want to hide contribution group/page."
+        "skipImportFormContributions": "Optional, default is 'false', set true to skip import control contributions on work item form.",
     }
 }
 ```
 
 ##### Notes 
 - If extensions used by source account are not available in target account, import MAY fail
-   1) Group/Page contributions on work item form are not imported by default - they automatically get added to work item form when you install the extension on target account
-   2) Control contributions on work item form are by default imported, so it will fail if the extension is not available on target account import will fail. use 'skipImportControlContributions' option to skip importing custom controls.
+   1) Control/Group/Page contributions on work item form are by default imported, so it will fail if the extension is not available on target account. use 'skipImportFormContributions' option to skip importing custom controls.
 - If identities used in field default value or rules are not available in target account, import WILL fail
    1) For rules you may use 'continueOnRuleImportFailure' option to proceed with rest of import when such error is occurred.
    2) For identity field default value, you may use 'continueOnFieldDefaultValueFailure' option to proceed with rest of import when such error is occurred.

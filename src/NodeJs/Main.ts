@@ -24,7 +24,9 @@ async function main() {
 
     // Initialize logger
     const maxLogLevel = configuration.options.logLevel ? LogLevel[configuration.options.logLevel] : LogLevel.information;
-    InitializeFileLogger(NodeJsUtility.getLogFilePath(configuration.options), maxLogLevel);
+    const logFile = NodeJsUtility.getLogFilePath(configuration.options);
+    InitializeFileLogger(logFile, maxLogLevel);
+    logger.logInfo(`Full log is sent to '${resolve(logFile)}' `)
 
     // Enable user cancellation
     NodeJsUtility.startCancellationListener();
