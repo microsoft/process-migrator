@@ -10,12 +10,12 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 
 - Install npm if not yet - [link](https://www.npmjs.com/get-npm)
 - Install this package through `npm install process-migrator -g` 
-- Create and fill required information in config file *configuration.json*. See [doc section](#documentation) for details
+- Create and fill required information in config file *configuration.json*. See [document section](#documentation) for details
 
-   Just run ```processMigrator``` will create the file if not exist.
+   Just run ```process-migrator``` without any argument will create the file if it does not exist.
 
    ##### ![](https://imgplaceholder.com/100x17/cccccc/fe2904?text=WARNING&font-size=15) CONFIGURATION FILE HAS PAT, RIGHT PROTECT IT !
-- Run `processMigrator [--mode=<migrate(default)import/export> [--config=<your-configuration-file-path>]`
+- Run `process-migrator [--mode=<migrate(default)/import/export> [--config=<your-configuration-file-path>]`
   
 ## Contribute
 
@@ -25,25 +25,25 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 
 ## Documentation
 ##### Command line parameters
-- --mode: Optional, defaulted to 'migrate'. Mode of the execution, can be 'migrate' (export and then import), 'export' (export only) or 'import' (import only).
-- --config: Optional, default to './configuration.json'. Specify the configuration file.
+- --mode: Optional, default as 'migrate'. Mode of the execution, can be 'migrate' (export and then import), 'export' (export only) or 'import' (import only).
+- --config: Optional, default as './configuration.json'. Specify the configuration file.
 ##### Configuration file strcuture
 - This file is in [JSONC](https://github.com/Microsoft/node-jsonc-parser) format, you don't have to remove comments lines for it to work. 
 ``` json
 {
-    "sourceAccountUrl": "Required in 'export'/'migrate' mode, source account url.",
-    "sourceAccountToken": "!!TREAT THIS AS PASSWORD!! Required in 'export'/'migrate' mode, personal access token for source account.",
-    "targetAccountUrl": "Required in 'import'/'migrate' mode, target account url.",
-    "targetAccountToken": "!!TREAT THIS AS PASSWORD!! Required in 'import'/'migrate' mode, personal access token for target account.",
-    "sourceProcessName": "Required in 'export'/'migrate' mode, source process name.",
-    "targetProcessName": "Optional, set to override process name in 'import'/'migrate' mode.",
+    "sourceAccountUrl": "Source account url. Required in export/migrate mode, ignored in import mode. ",
+    "sourceAccountToken": "!!TREAT AS PASSWORD!! Personal access token for source account. Required in export/migrate mode, ignored in import mode.",
+    "targetAccountUrl": "Target account url. Required in import/migrate mode, ignored in export mode. ",
+    "targetAccountToken": "!!TREAT AS PASSWORD!! Personal access token for target account. Required in import/migrate mode, ignored in export mode.",
+    "sourceProcessName": "Source process name to export. Required in export/migrate mode, ignored in import mode. ",
+    "targetProcessName": "Optional. Set to override process name in import/migrate mode.",
     "options": {
-        "processFilename": "Required in 'import' mode, optional in 'export'/'migrate' mode to override default value './output/process.json'.",
-        "logLevel":"Optional, default as 'Information'. Logs at or higher than this level are outputed to console and rest in log file. Possiblee values are 'Verbose'/'Information'/'Warning'/'Error'.",
-        "logFilename":"Optional, default as 'output/processMigrator.log' - Set to override default log file name.",
-        "overwritePicklist": "Optional, default is 'false'. Set true to overwrite picklist if exists on target. Import will fail if picklist exists but different from source.",
-        "continueOnRuleImportFailure": "Optional, default is 'false', set true to continue import on failure importing rules, warning will be provided.",
-        "skipImportFormContributions": "Optional, default is 'false', set true to skip import control contributions on work item form.",
+        "processFilename": "File with process payload. Required in import mode, optional for export/migrate mode.",
+        "logLevel":"Optional, log level for console. Possibe values are 'Verbose'/'Information'/'Warning'/'Error'.",
+        "logFilename":"Optional, file name for log. defaulted to 'output/processMigrator.log'",
+        "overwritePicklist": "Optional, default to 'false'. Set as true to overwrite picklist if exists on target or import will fail when picklist entries varies across source and target",
+        "continueOnRuleImportFailure": "Optional, default to 'false', set true to continue import on failure importing rules, warning will be provided.",
+        "skipImportFormContributions": "Optional, default to 'false', set true to skip import control contributions on work item form.",
     }
 }
 ```
