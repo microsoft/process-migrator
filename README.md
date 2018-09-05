@@ -27,7 +27,7 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 ##### Command line parameters
 - --mode: Optional, default as 'migrate'. Mode of the execution, can be 'migrate' (export and then import), 'export' (export only) or 'import' (import only).
 - --config: Optional, default as './configuration.json'. Specify the configuration file.
-##### Configuration file strcuture
+##### Configuration file structure
 - This file is in [JSONC](https://github.com/Microsoft/node-jsonc-parser) format, you don't have to remove comments lines for it to work. 
 ``` json
 {
