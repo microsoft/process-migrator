@@ -1,12 +1,12 @@
 import * as assert from "assert";
 import { Guid } from "guid-typescript";
 
-import * as WITInterfaces from "vso-node-api/interfaces/WorkItemTrackingInterfaces";
-import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
-import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
-import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
-import { IWorkItemTrackingProcessApi as WITProcessApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingProcessApi";
-import { IWorkItemTrackingApi as WITApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingApi";
+import * as WITInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
+import * as WITProcessDefinitionsInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
+import * as WITProcessInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessInterfaces";
+import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingProcessDefinitionsApi";
+import { IWorkItemTrackingProcessApi as WITProcessApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingProcessApi";
+import { IWorkItemTrackingApi as WITApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingApi";
 
 import { PICKLIST_NO_ACTION } from "./Constants";
 import { Engine } from "./Engine";

@@ -41,7 +41,7 @@
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "url": "^0.11.0",
-    "vso-node-api": "^6.5.0",
+    "azure-devops-node-api": "^6.5.0",
     "vss-web-extension-sdk": "^5.131.0"
   }
 }

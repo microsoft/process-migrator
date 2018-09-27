@@ -1,4 +1,4 @@
-import * as vsts from "vso-node-api/WebApi";
+import * as vsts from "azure-devops-node-api/WebApi";
 import { existsSync, writeFileSync } from "fs";
 import { dirname, normalize } from "path";
 import { sync as mkdirpSync } from "mkdirp";

@@ -1,10 +1,9 @@
-import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
-import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
-
-import * as vsts_NOREQUIRE from "vso-node-api/WebApi";
-import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
-import { IWorkItemTrackingProcessApi as WITProcessApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingProcessApi";
-import { IWorkItemTrackingApi as WITApi_NOREQUIRE } from "vso-node-api/WorkItemTrackingApi";
+import * as WITProcessDefinitionsInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
+import * as WITProcessInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessInterfaces";
+import * as vsts_NOREQUIRE from "azure-devops-node-api/WebApi";
+import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingProcessDefinitionsApi";
+import { IWorkItemTrackingProcessApi as WITProcessApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingProcessApi";
+import { IWorkItemTrackingApi as WITApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingApi";
 
 import { IConfigurationFile, IDictionaryStringTo, IProcessPayload, IWITBehaviors, IWITBehaviorsInfo, IWITFieldPicklist, IWITLayout, IWITRules, IWITStates, IWITypeFields, IRestClients } from "./Interfaces";
 import { ExportError } from "./Errors";

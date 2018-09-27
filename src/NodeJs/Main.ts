@@ -9,7 +9,6 @@ import { logger } from "../common/Logger";
 import { InitializeFileLogger } from "./FileLogger";
 import { ProcessExporter } from "../common/ProcessExporter";
 import { ProcessImporter } from "../common/ProcessImporter";
-import { Utility } from "../common/Utilities";
 import { Engine } from "../common/Engine";
 import { NodeJsUtility } from "./NodeJsUtilities";
 
@@ -20,7 +19,16 @@ async function main() {
     const commandLineOptions = ProcesCommandLine();
 
     // Read configuration file 
-    const configuration = await ProcessConfigurationFile(commandLineOptions.config, commandLineOptions.mode)
+    const configuration = await ProcessConfigurationFile(commandLineOptions)
+
+    // Overwrite token if specified on command line 
+    if (commandLineOptions.sourceToken) {
+        configuration.sourceAccountToken = commandLineOptions.sourceToken;
+    }
+
+    if (commandLineOptions.targetToken) {
+        configuration.targetAccountToken = commandLineOptions.targetToken;
+    }
 
     // Initialize logger
     const maxLogLevel = configuration.options.logLevel ? LogLevel[configuration.options.logLevel] : LogLevel.information;

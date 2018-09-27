@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { normalize } from "path";
 import * as minimist from "minimist";
 import * as url from "url";
-import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramOverwriteProcessOnTarget } from "../common/Constants";
+import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramSourceToken, paramTargetToken } from "../common/Constants";
 import { IConfigurationFile, LogLevel, Modes, ICommandLineOptions } from "../common/Interfaces";
 import { logger } from "../common/Logger";
 import { Utility } from "../common/Utilities";
@@ -14,7 +14,9 @@ export function ProcesCommandLine(): ICommandLineOptions {
         alias: {
             "help": "h",
             "mode": "m",
-            "config": "c"
+            "config": "c",
+            "sourcetoken": "s",
+            "targettoken": "t"
         }
     }
     const parsedArgs = minimist(process.argv, parseOptions);
@@ -33,7 +35,7 @@ export function ProcesCommandLine(): ICommandLineOptions {
             case Modes[Modes.export]: mode = Modes.export; break;
             case Modes[Modes.import]: mode = Modes.import; break;
             case Modes[Modes.migrate]: mode = Modes.migrate; break;
-            default: logger.logError(`Invalid mode argument, allowed values are 'import','export' and 'migrate'.`); process.exit(1);
+            default: logger.logError(`Invalid mode argument, allowed values are 'import', 'export' or 'migrate'.`); process.exit(1);
         }
     } else {
         mode = Modes.migrate;
@@ -42,15 +44,17 @@ export function ProcesCommandLine(): ICommandLineOptions {
     const ret = {};
     ret[paramMode] = mode;
     ret[paramConfig] = configFileName;
-    ret[paramOverwriteProcessOnTarget] = !!parsedArgs[paramOverwriteProcessOnTarget];
+    ret[paramSourceToken] = parsedArgs[paramSourceToken];
+    ret[paramTargetToken] = parsedArgs[paramTargetToken];
 
     return <ICommandLineOptions>ret;
 }
 
-export async function ProcessConfigurationFile(configFilename: string, mode: Modes): Promise<IConfigurationFile> {
+export async function ProcessConfigurationFile(commandLineOptions: ICommandLineOptions): Promise<IConfigurationFile> {
     // Load configuration file
-    if (!existsSync(configFilename)) {
-        logger.logError(`Cannot find configuration file '${configFilename}'`);
+    const configFile = commandLineOptions.config;
+    if (!existsSync(configFile)) {
+        logger.logError(`Cannot find configuration file '${configFile}'`);
         const normalizedConfiguraitonFilename = normalize(defaultConfigurationFilename);
         if (!existsSync(normalizedConfiguraitonFilename)) {
             writeFileSync(normalizedConfiguraitonFilename, defaultConfiguration);
@@ -59,8 +63,13 @@ export async function ProcessConfigurationFile(configFilename: string, mode: Mod
         process.exit(1);
     }
 
-    const configuration = jsoncParse(readFileSync(configFilename, defaultEncoding)) as IConfigurationFile;
-    if (!Utility.validateConfiguration(configuration, mode)) {
+    const configuration = jsoncParse(readFileSync(configFile, defaultEncoding)) as IConfigurationFile;
+
+    // replace token if overriden from command line
+    configuration.sourceAccountToken = commandLineOptions.sourceToken ? commandLineOptions.sourceToken : configuration.sourceAccountToken;
+    configuration.targetAccountToken = commandLineOptions.targetToken ? commandLineOptions.targetToken : configuration.targetAccountToken;
+
+    if (!Utility.validateConfiguration(configuration, commandLineOptions.mode)) {
         process.exit(1);
     }
 

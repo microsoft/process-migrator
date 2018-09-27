@@ -1,9 +1,9 @@
-import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
-import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
-import * as WITInterfaces from "vso-node-api/interfaces/WorkItemTrackingInterfaces";
-import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi } from "vso-node-api/WorkItemTrackingProcessDefinitionsApi";
-import { IWorkItemTrackingProcessApi as WITProcessApi } from "vso-node-api/WorkItemTrackingProcessApi";
-import { IWorkItemTrackingApi as WITApi } from "vso-node-api/WorkItemTrackingApi";
+import * as WITProcessDefinitionsInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
+import * as WITProcessInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessInterfaces";
+import * as WITInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
+import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi } from "azure-devops-node-api/WorkItemTrackingProcessDefinitionsApi";
+import { IWorkItemTrackingProcessApi as WITProcessApi } from "azure-devops-node-api/WorkItemTrackingProcessApi";
+import { IWorkItemTrackingApi as WITApi } from "azure-devops-node-api/WorkItemTrackingApi";
 
 export enum LogLevel {
     error,
@@ -26,6 +26,8 @@ export interface ICommandLineOptions {
     mode: Modes;
     overwriteProcessOnTarget: boolean;
     config: string;
+    sourceToken?: string;
+    targetToken?: string;
 }
 
 export interface IConfigurationFile {
