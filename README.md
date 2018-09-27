@@ -39,7 +39,7 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
     "targetProcessName": "Optional. Set to override process name in import/migrate mode.",
     "options": {
         "processFilename": "File with process payload. Required in import mode, optional for export/migrate mode.",
-        "logLevel":"Optional, log level for console. Possibe values are 'Verbose'/'Information'/'Warning'/'Error'.",
+        "logLevel":"Optional, log level for console. Possible values are 'verbose'/'information'/'warning'/'error'.",
         "logFilename":"Optional, file name for log. defaulted to 'output/processMigrator.log'",
         "overwritePicklist": "Optional, default to 'false'. Set as true to overwrite picklist if exists on target or import will fail when picklist entries varies across source and target",
         "continueOnRuleImportFailure": "Optional, default to 'false', set true to continue import on failure importing rules, warning will be provided.",
