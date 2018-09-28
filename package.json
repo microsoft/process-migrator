@@ -1,6 +1,6 @@
 {
   "name": "process-migrator",
-  "version": "0.9.5",
+  "version": "0.9.7",
   "description": "Proces import/export Node.js application",
   "main": "",
   "bin": {
