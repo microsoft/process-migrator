@@ -1,9 +1,9 @@
-import * as WITInterfaces from "vso-node-api/interfaces/WorkItemTrackingInterfaces";
-import * as WITProcessDefinitionsInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
-import * as WITProcessInterfaces from "vso-node-api/interfaces/WorkItemTrackingProcessInterfaces";
+import * as WITInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
+import * as WITProcessDefinitionsInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
+import * as WITProcessInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessInterfaces";
 import { KnownError } from "./Errors";
 import { logger } from "./Logger";
-import { Modes, IConfigurationFile, LogLevel } from "./Interfaces";
+import { Modes, IConfigurationFile, LogLevel, ICommandLineOptions } from "./Interfaces";
 import * as url from "url";
 import { Guid } from "guid-typescript";
 import { regexRemoveHypen } from "./Constants";
@@ -193,7 +193,7 @@ export class Utility {
                 return false;
             }
             if (!configuration.targetAccountToken) {
-                logger.logError(`[Configuration validation] Personal access token for target account is empty.`);
+                logger.logError(`[Configuration validation] Missing personal access token for target account.`);
                 return false;
             }
             if (configuration.options && configuration.options.overwritePicklist && (configuration.options.overwritePicklist !== true && configuration.options.overwritePicklist !== false)) {

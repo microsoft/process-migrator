@@ -5,6 +5,8 @@ export const defaultLogFileName = "output\\processMigrator.log";
 export const defaultProcessFilename = "output\\process.json";
 export const paramMode = "mode";
 export const paramConfig = "config";
+export const paramSourceToken = "sourceToken";
+export const paramTargetToken = "targetToken";
 export const paramOverwriteProcessOnTarget = "overwriteProcessOnTarget";
 export const defaultConfiguration =
     `{
