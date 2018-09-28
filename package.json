@@ -1,6 +1,6 @@
 {
   "name": "process-migrator",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "Proces import/export Node.js application",
   "main": "",
   "bin": {
@@ -19,7 +19,8 @@
     "url": "https://github.com/Microsoft/process-migrator"
   },
   "keywords": [
-    "vsts",
+    "azure devops",
+    "azure boards",
     "process",
     "import",
     "export",

@@ -22,7 +22,7 @@ export function ProcesCommandLine(): ICommandLineOptions {
     const parsedArgs = minimist(process.argv, parseOptions);
 
     if (parsedArgs["h"]) {
-        logger.logInfo(`Usage: processMigrator [--mode=<migrate(default)import/export> [--config=<your-configuration-file-path>]`);
+        logger.logInfo(`Usage: process-migrator [--mode=<migrate(default)/import/export> [--config=<your-configuration-file-path>]`);
         process.exit(0);
     }
 

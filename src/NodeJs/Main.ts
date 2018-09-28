@@ -78,7 +78,7 @@ async function main() {
         }
         else {
             logger.logException(error);
-            logger.logError(`Encourntered unkonwn error, check log file for details.`)
+            logger.logError(`Encountered unkonwn error, check log file for details.`)
         }
         process.exit(1);
     }
