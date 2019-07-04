@@ -217,8 +217,8 @@ export class ProcessImporter {
         }
 
         let newPage: WITProcessDefinitionsInterfaces.Page; //The newly created page, contains the pageId required to create groups.
-        const createPage: WITProcessDefinitionsInterfaces.Page = Utility.toCreatePage(page);
-        const sourcePagesOnTarget: WITProcessDefinitionsInterfaces.Page[] = targetLayout.pages.filter(p => p.id === page.id);
+        const createPage = Utility.toCreatePage(page);
+        const sourcePagesOnTarget = targetLayout.pages.filter(p => p.id === page.id);
         try {
             newPage = sourcePagesOnTarget.length === 0
                 ? await Engine.Task(() => this._witProcessDefinitionApi.addPage(createPage, payload.process.typeId, witLayout.workItemTypeRefName),
@@ -235,6 +235,35 @@ export class ProcessImporter {
         }
 
         page.id = newPage.id;
+        // First pass - process inherited groups first (in case a custom group uses inherited group name causing conflict)
+        await this._importInheritedGroups(witLayout, page, payload);
+
+        // Second pass - process custom groups and controls 
+        await this._importOtherGroupsAndControls(witLayout, page, payload);
+    }
+
+    private async _importInheritedGroups(
+        witLayout: IWITLayout,
+        page: WITProcessDefinitionsInterfaces.Page,
+        payload: IProcessPayload
+    ) {
+        logger.logVerbose(`Start import inherited group changes`);
+        for (const section of page.sections) {
+            for (const group of section.groups) {
+                if (group.inherited && group.overridden) {
+                    const updatedGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
+                    await this._editGroup(updatedGroup, page, section, group, witLayout, payload);
+                }
+            }
+        }
+    }
+
+    private async _importOtherGroupsAndControls(
+        witLayout: IWITLayout,
+        page: WITProcessDefinitionsInterfaces.Page,
+        payload: IProcessPayload
+    ) {
+        logger.logVerbose(`Start import custom groups and all controls`);
         for (const section of page.sections) {
             for (const group of section.groups) {
                 let newGroup: WITProcessDefinitionsInterfaces.Group;
@@ -246,19 +275,16 @@ export class ProcessImporter {
 
                 if (group.controls.length !== 0 && group.controls[0].controlType === "HtmlFieldControl") {
                     //Handle groups with HTML Controls
-                    const createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
-
                     if (group.inherited) {
                         if (group.overridden) {
-                            newGroup = await this._editGroup(createGroup, page, section, group, witLayout, payload);
-
+                            // No handling on group update since we have done this already in 1st pass
                             const htmlControl = group.controls[0];
                             if (htmlControl.overridden) {
                                 // If the HTML control is overriden, we must update that as well 
                                 let updatedHtmlControl: WITProcessDefinitionsInterfaces.Control;
                                 try {
                                     updatedHtmlControl = await Engine.Task(
-                                        () => this._witProcessDefinitionApi.editControl(htmlControl, payload.process.typeId, witLayout.workItemTypeRefName, newGroup.id, htmlControl.id),
+                                        () => this._witProcessDefinitionApi.editControl(htmlControl, payload.process.typeId, witLayout.workItemTypeRefName, group.id, htmlControl.id),
                                         `Edit HTML control '${htmlControl.id} in group'${group.id}' in page '${page.id}'`);
                                 }
                                 catch (error) {
@@ -277,22 +303,17 @@ export class ProcessImporter {
                     }
                     else {
                         // special handling for HTML control - we must create a group containing the HTML control at same time.
+                        const createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
                         createGroup.controls = group.controls;
                         await this._createGroup(createGroup, page, section, witLayout, payload);
                     }
                 }
                 else {
                     //Groups with no HTML Controls
-                    let createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
 
-                    if (group.inherited) {
-                        if (group.overridden) {
-                            //edit
-                            await this._editGroup(createGroup, page, section, group, witLayout, payload);
-                        }
-                    }
-                    else {
-                        //create
+                    if (!group.inherited) {
+                        //create the group if it's not inherited
+                        const createGroup = Utility.toCreateGroup(group);
                         newGroup = await this._createGroup(createGroup, page, section, witLayout, payload);
                         group.id = newGroup.id;
                     }
