@@ -318,10 +318,12 @@ export class ProcessImporter {
                         group.id = newGroup.id;
                     }
 
-                    for (const control of group.controls) {
+                    for (let i = 0; i < group.controls.length; i++) {
+                        let control = group.controls[i];
+
                         if (!control.inherited || control.overridden) {
                             try {
-                                let createControl: WITProcessDefinitionsInterfaces.Control = Utility.toCreateControl(control);
+                                let createControl: WITProcessDefinitionsInterfaces.Control = Utility.toCreateControl(control, i);
 
                                 if (control.controlType === "WebpageControl" || (control.isContribution === true && this._config.options.skipImportFormContributions === true)) {
                                     // Skip web page control for now since not supported in inherited process.
