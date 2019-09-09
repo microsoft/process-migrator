@@ -249,9 +249,10 @@ export class ProcessImporter {
     ) {
         logger.logVerbose(`Start import inherited group changes`);
         for (const section of page.sections) {
-            for (const group of section.groups) {
+            for (let groupIndex = 0; groupIndex < section.groups.length; groupIndex++) {
+                let group = section.groups[groupIndex];
                 if (group.inherited && group.overridden) {
-                    const updatedGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
+                    const updatedGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group, groupIndex);
                     await this._editGroup(updatedGroup, page, section, group, witLayout, payload);
                 }
             }
@@ -265,7 +266,8 @@ export class ProcessImporter {
     ) {
         logger.logVerbose(`Start import custom groups and all controls`);
         for (const section of page.sections) {
-            for (const group of section.groups) {
+            for (let groupIndex = 0; groupIndex < section.groups.length; groupIndex++) {
+                let group = section.groups[groupIndex];
                 let newGroup: WITProcessDefinitionsInterfaces.Group;
 
                 if (group.isContribution === true && this._config.options.skipImportFormContributions === true) {
@@ -303,7 +305,7 @@ export class ProcessImporter {
                     }
                     else {
                         // special handling for HTML control - we must create a group containing the HTML control at same time.
-                        const createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
+                        const createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group, groupIndex);
                         createGroup.controls = group.controls;
                         await this._createGroup(createGroup, page, section, witLayout, payload);
                     }
@@ -313,17 +315,17 @@ export class ProcessImporter {
 
                     if (!group.inherited) {
                         //create the group if it's not inherited
-                        const createGroup = Utility.toCreateGroup(group);
+                        const createGroup = Utility.toCreateGroup(group, groupIndex);
                         newGroup = await this._createGroup(createGroup, page, section, witLayout, payload);
                         group.id = newGroup.id;
                     }
 
-                    for (let i = 0; i < group.controls.length; i++) {
-                        let control = group.controls[i];
+                    for (let controlIndex = 0; controlIndex < group.controls.length; controlIndex++) {
+                        let control = group.controls[controlIndex];
 
                         if (!control.inherited || control.overridden) {
                             try {
-                                let createControl: WITProcessDefinitionsInterfaces.Control = Utility.toCreateControl(control, i);
+                                let createControl: WITProcessDefinitionsInterfaces.Control = Utility.toCreateControl(control, controlIndex);
 
                                 if (control.controlType === "WebpageControl" || (control.isContribution === true && this._config.options.skipImportFormContributions === true)) {
                                     // Skip web page control for now since not supported in inherited process.

@@ -66,7 +66,7 @@ export class Utility {
     /**Convert group from getLayout group interface to WITProcessDefinitionsInterfaces.Group
      * @param group
     */
-    public static toCreateGroup(group: WITProcessDefinitionsInterfaces.Group): WITProcessDefinitionsInterfaces.Group {
+    public static toCreateGroup(group: WITProcessDefinitionsInterfaces.Group, order: number): WITProcessDefinitionsInterfaces.Group {
         let createGroup: WITProcessDefinitionsInterfaces.Group = {
             id: group.id,
             inherited: group.inherited,
@@ -76,7 +76,7 @@ export class Utility {
             controls: null,
             contribution: group.contribution,
             height: group.height,
-            order: null,
+            order: order,
             overridden: null
         }
         return createGroup;
