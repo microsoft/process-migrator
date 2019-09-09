@@ -66,7 +66,7 @@ export class Utility {
     /**Convert group from getLayout group interface to WITProcessDefinitionsInterfaces.Group
      * @param group
     */
-    public static toCreateGroup(group: WITProcessDefinitionsInterfaces.Group): WITProcessDefinitionsInterfaces.Group {
+    public static toCreateGroup(group: WITProcessDefinitionsInterfaces.Group, order: number): WITProcessDefinitionsInterfaces.Group {
         let createGroup: WITProcessDefinitionsInterfaces.Group = {
             id: group.id,
             inherited: group.inherited,
@@ -76,7 +76,7 @@ export class Utility {
             controls: null,
             contribution: group.contribution,
             height: group.height,
-            order: null,
+            order: order,
             overridden: null
         }
         return createGroup;
@@ -85,7 +85,7 @@ export class Utility {
     /**Convert control from getLayout control interface to WITProcessDefinitionsInterfaces.Control
      * @param control
     */
-    public static toCreateControl(control: WITProcessDefinitionsInterfaces.Control): WITProcessDefinitionsInterfaces.Control {
+    public static toCreateControl(control: WITProcessDefinitionsInterfaces.Control, order: number): WITProcessDefinitionsInterfaces.Control {
         let createControl: WITProcessDefinitionsInterfaces.Control = {
             id: control.id,
             inherited: control.inherited,
@@ -98,7 +98,7 @@ export class Utility {
             isContribution: control.isContribution,
             contribution: control.contribution,
             height: control.height,
-            order: null,
+            order: order,
             overridden: null
         }
         return createControl;
