@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { normalize, join, resolve } from "path";
+import { normalize } from "path";
 import * as minimist from "minimist";
 import * as url from "url";
 import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramSourceToken, paramTargetToken, paramOverwriteProcessOnTarget } from "../common/Constants";
