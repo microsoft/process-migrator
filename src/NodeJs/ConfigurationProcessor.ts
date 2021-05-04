@@ -46,11 +46,10 @@ export function ProcesCommandLine(): ICommandLineOptions {
     ret[paramConfig] = configFileName;
     ret[paramSourceToken] = parsedArgs[paramSourceToken];
     ret[paramTargetToken] = parsedArgs[paramTargetToken];
-    ret[paramOverwriteProcessOnTarget] = parsedArgs[paramOverwriteProcessOnTarget];
+    ret[paramOverwriteProcessOnTarget] = !!parsedArgs[paramOverwriteProcessOnTarget];
 
     return <ICommandLineOptions>ret;
 }
-
 export async function ProcessConfigurationFile(commandLineOptions: ICommandLineOptions): Promise<IConfigurationFile> {
     // Load configuration file
     const configFile = commandLineOptions.config;
@@ -64,11 +63,9 @@ export async function ProcessConfigurationFile(commandLineOptions: ICommandLineO
         process.exit(1);
     }
 
-    const rawFile = readFileSync(configFile, defaultEncoding);
-    const configuration = jsoncParse(rawFile) as IConfigurationFile;
+    const configuration = jsoncParse(readFileSync(configFile, defaultEncoding)) as IConfigurationFile;
 
     // replace token if overriden from command line
-    logger.logInfo(`Loaded configuration from ${resolve(join(process.cwd(), configFile))}: \r\n${rawFile}`);
     configuration.sourceAccountToken = commandLineOptions.sourceToken ? commandLineOptions.sourceToken : configuration.sourceAccountToken;
     configuration.targetAccountToken = commandLineOptions.targetToken ? commandLineOptions.targetToken : configuration.targetAccountToken;
 
