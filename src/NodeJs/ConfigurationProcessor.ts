@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { normalize } from "path";
+import { normalize, join, resolve } from "path";
 import * as minimist from "minimist";
 import * as url from "url";
 import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramSourceToken, paramTargetToken } from "../common/Constants";
@@ -66,7 +66,7 @@ export async function ProcessConfigurationFile(commandLineOptions: ICommandLineO
     const configuration = jsoncParse(readFileSync(configFile, defaultEncoding)) as IConfigurationFile;
 
     // replace token if overriden from command line
-    logger.logInfo(`Loaded configuration from ${configFile}: \r\n${JSON.stringify(configuration, null, 4)}`);
+    logger.logInfo(`Loaded configuration from ${resolve(join(process.cwd(), configFile))}: \r\n${JSON.stringify(configuration, null, 4)}`);
     configuration.sourceAccountToken = commandLineOptions.sourceToken ? commandLineOptions.sourceToken : configuration.sourceAccountToken;
     configuration.targetAccountToken = commandLineOptions.targetToken ? commandLineOptions.targetToken : configuration.targetAccountToken;
 
