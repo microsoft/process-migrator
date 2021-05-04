@@ -50,6 +50,7 @@ export function ProcesCommandLine(): ICommandLineOptions {
 
     return <ICommandLineOptions>ret;
 }
+
 export async function ProcessConfigurationFile(commandLineOptions: ICommandLineOptions): Promise<IConfigurationFile> {
     // Load configuration file
     const configFile = commandLineOptions.config;
