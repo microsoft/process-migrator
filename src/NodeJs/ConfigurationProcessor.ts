@@ -63,10 +63,11 @@ export async function ProcessConfigurationFile(commandLineOptions: ICommandLineO
         process.exit(1);
     }
 
-    const configuration = jsoncParse(readFileSync(configFile, defaultEncoding)) as IConfigurationFile;
+    const rawFile = readFileSync(configFile, defaultEncoding);
+    const configuration = jsoncParse(rawFile) as IConfigurationFile;
 
     // replace token if overriden from command line
-    logger.logInfo(`Loaded configuration from ${resolve(join(process.cwd(), configFile))}: \r\n${JSON.stringify(configuration, null, 4)}`);
+    logger.logInfo(`Loaded configuration from ${resolve(join(process.cwd(), configFile))}: \r\n${rawFile}`);
     configuration.sourceAccountToken = commandLineOptions.sourceToken ? commandLineOptions.sourceToken : configuration.sourceAccountToken;
     configuration.targetAccountToken = commandLineOptions.targetToken ? commandLineOptions.targetToken : configuration.targetAccountToken;
 
