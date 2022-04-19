@@ -55,3 +55,4 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
    1) For rules you may use 'continueOnRuleImportFailure' option to proceed with rest of import when such error is occurred.
    2) For identity field default value, you may use 'continueOnFieldDefaultValueFailure' option to proceed with rest of import when such error is occurred.
 - Personal Access Token (PAT) needs to allow "Read, write, & manage" access for the "Work Items" scope.
+   1) The tool needs to be able to modify the definition of work items and work item types (to add custom fields for example).
