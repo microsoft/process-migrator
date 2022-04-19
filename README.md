@@ -54,4 +54,4 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 - If identities used in field default value or rules are not available in target account, import WILL fail
    1) For rules you may use 'continueOnRuleImportFailure' option to proceed with rest of import when such error is occurred.
    2) For identity field default value, you may use 'continueOnFieldDefaultValueFailure' option to proceed with rest of import when such error is occurred.
-- Personal Access Token (PAT) needs to be scoped to allow "Read, write, & manage" access for "Work Items"
+- Personal Access Token (PAT) needs to allow "Read, write, & manage" access for "Work Items" scope.
