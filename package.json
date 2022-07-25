@@ -37,12 +37,12 @@
     "typescript": "^2.8.1"
   },
   "dependencies": {
+    "azure-devops-node-api": "^6.5.0",
     "guid-typescript": "^1.0.7",
     "jsonc-parser": "^2.0.0",
-    "minimist": "^1.2.0",
-    "mkdirp": "^0.5.1",
+    "minimist": "^1.2.6",
+    "mkdirp": "^1.0.4",
     "url": "^0.11.0",
-    "azure-devops-node-api": "^6.5.0",
     "vss-web-extension-sdk": "^5.131.0"
   }
 }
