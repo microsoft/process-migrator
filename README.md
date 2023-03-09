@@ -8,7 +8,9 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 
 ## Run
 
-- Install npm if not yet - [link](https://www.npmjs.com/get-npm)
+To run this tool you must have both NodeJS and NPM installed. They are available as a single package and instructions are below.
+
+- Install Node from https://nodejs.org/en/download/ or https://nodejs.org/en/download/package-manager/
 - Install this package through `npm install process-migrator -g` 
 - Create and fill required information in config file *configuration.json*. See [document section](#documentation) for details
 
