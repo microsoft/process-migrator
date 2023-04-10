@@ -32,7 +32,8 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 ``` json
 {
     "sourceAccountUrl": "Source account url. Required in export/migrate mode, ignored in import mode. ",
-    "sourceAccountToken": "!!TREAT AS PASSWORD!! In Azure DevOps click on user settings Personal access tokens an generate a token for source account. Required in export/migrate mode, ignored in import mode.",
+    "sourceAccountToken": "!!TREAT AS PASSWORD!! In Azure DevOps click on user settings P
+    personal access tokens an generate a token for source account. Required in export/migrate mode, ignored in import mode.",
     "targetAccountUrl": "Target account url. Required in import/migrate mode, ignored in export mode. ",
     "targetAccountToken": "!!TREAT AS PASSWORD!! In Azure DevOps click on user settings  personal access tokens and generate a token for target account. Required in import/migrate mode, ignored in export mode.",
     "sourceProcessName": "Source process name to export. Required in export/migrate mode, ignored in import mode. ",
