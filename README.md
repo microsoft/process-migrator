@@ -16,7 +16,10 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 
    ##### ![](https://imgplaceholder.com/100x17/cccccc/fe2904?text=WARNING&font-size=15) CONFIGURATION FILE HAS PAT, RIGHT PROTECT IT !
 - Run `process-migrator [--mode=<migrate(default)/import/export> [--config=<your-configuration-file-path>]`
-  
+  example `process-migrator --mode=migrate --config= ./configuration.json`
+
+
+    
 ## Contribute
 
 - From the root of source, run `npm install`
