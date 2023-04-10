@@ -32,14 +32,14 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 ``` json
 {
     "sourceAccountUrl": "Source account url. Required in export/migrate mode, ignored in import mode. ",
-    "sourceAccountToken": "!!TREAT AS PASSWORD!! Personal access token for source account. Required in export/migrate mode, ignored in import mode.",
+    "sourceAccountToken": "!!TREAT AS PASSWORD!! In Azure DevOps click on user settings Personal access tokens an generate a token for source account. Required in export/migrate mode, ignored in import mode.",
     "targetAccountUrl": "Target account url. Required in import/migrate mode, ignored in export mode. ",
-    "targetAccountToken": "!!TREAT AS PASSWORD!! Personal access token for target account. Required in import/migrate mode, ignored in export mode.",
+    "targetAccountToken": "!!TREAT AS PASSWORD!! In Azure DevOps click on user settings  personal access tokens and generate a token for target account. Required in import/migrate mode, ignored in export mode.",
     "sourceProcessName": "Source process name to export. Required in export/migrate mode, ignored in import mode. ",
     "targetProcessName": "Optional. Set to override process name in import/migrate mode.",
     "options": {
-        "processFilename": "File with process payload. Required in import mode, optional for export/migrate mode.",
-        "logLevel":"Optional, log level for console. Possible values are 'verbose'/'information'/'warning'/'error'.",
+        "processFilename": "Optional File with process payload. Required in import mode, optional for export/migrate mode.",
+        "logLevel":"log level for console. Possible values are 'verbose'/'information'/'warning'/'error' or null.",
         "logFilename":"Optional, file name for log. defaulted to 'output/processMigrator.log'",
         "overwritePicklist": "Optional, default to 'false'. Set as true to overwrite picklist if exists on target or import will fail when picklist entries varies across source and target",
         "continueOnRuleImportFailure": "Optional, default to 'false', set true to continue import on failure importing rules, warning will be provided.",
