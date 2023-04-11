@@ -29,6 +29,9 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 - --config: Optional, default as './configuration.json'. Specify the configuration file.
 ##### Configuration file structure
 - This file is in [JSONC](https://github.com/Microsoft/node-jsonc-parser) format, you don't have to remove comments lines for it to work. 
+- The AccountUrl for the source and target is the root URL to the organization. Example: https://dev.azure.com/MyOrgName.
+- The Personal Access Token (PAT) for both the source and target must have the Work Items 'Read, Write, & Manage' permission scope.
+
 ``` json
 {
     "sourceAccountUrl": "Source account url. Required in export/migrate mode, ignored in import mode. ",
