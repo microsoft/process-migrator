@@ -670,7 +670,7 @@ export class ProcessImporter {
                 && (!sourceField.isIdentity || !targetField.isIdentity)); // with exception if both are identity - known issue we export identity field type = string 
 
             if (conflictingFields.length > 0) {
-                throw new ValidationError(`Field in target Collection conflicts with '${sourceField.name}' field with a diffrent refrence name or type.`);
+                throw new ValidationError(`Field in target Collection conflicts with '${sourceField.name}' field with a different reference name or type.`);
             }
         }
     }

@@ -8,7 +8,9 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 
 ## Run
 
-- Install npm if not yet - [link](https://www.npmjs.com/get-npm)
+To run this tool you must have both NodeJS and NPM installed. They are available as a single package and instructions are below.
+
+- Install Node from https://nodejs.org/en/download/ or https://nodejs.org/en/download/package-manager/
 - Install this package through `npm install process-migrator -g` 
 - Create and fill required information in config file *configuration.json*. See [document section](#documentation) for details
 
@@ -32,6 +34,9 @@ NOTE: This only works with 'Inherited Process', for 'XML process' you may upload
 - --config: Optional, default as './configuration.json'. Specify the configuration file.
 ##### Configuration file structure
 - This file is in [JSONC](https://github.com/Microsoft/node-jsonc-parser) format, you don't have to remove comments lines for it to work. 
+- The AccountUrl for the source and target is the root URL to the organization. Example: https://dev.azure.com/MyOrgName.
+- The Personal Access Token (PAT) for both the source and target must have the Work Items 'Read, Write, & Manage' permission scope.
+
 ``` json
 {
     "sourceAccountUrl": "Source account url. Required in export/migrate mode, ignored in import mode. ",
