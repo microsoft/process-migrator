@@ -17,7 +17,7 @@ To run this tool you must have both NodeJS and NPM installed. They are available
    Just run ```process-migrator``` without any argument will create the file if it does not exist.
 
    ##### ![](https://imgplaceholder.com/100x17/cccccc/fe2904?text=WARNING&font-size=15) CONFIGURATION FILE HAS PAT, RIGHT PROTECT IT !
-- Run `process-migrator [--mode=<migrate(default)/import/export> [--config=<your-configuration-file-path>]`
+- Run `process-migrator [--mode=<migrate(default)/import/export>] [--config=<your-configuration-file-path>]`
   
 ## Contribute
 
@@ -59,3 +59,5 @@ To run this tool you must have both NodeJS and NPM installed. They are available
 - If identities used in field default value or rules are not available in target account, import WILL fail
    1) For rules you may use 'continueOnRuleImportFailure' option to proceed with rest of import when such error is occurred.
    2) For identity field default value, you may use 'continueOnFieldDefaultValueFailure' option to proceed with rest of import when such error is occurred.
+- Personal Access Token (PAT) needs to allow "Read, write, & manage" access for the "Work Items" scope.
+   1) The tool needs to be able to modify the definition of work items and work item types (to add custom fields for example).
