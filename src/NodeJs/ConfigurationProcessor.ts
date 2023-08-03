@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { normalize } from "path";
 import * as minimist from "minimist";
 import * as url from "url";
-import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramSourceToken, paramTargetToken } from "../common/Constants";
+import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramSourceToken, paramTargetToken, paramOverwriteProcessOnTarget } from "../common/Constants";
 import { IConfigurationFile, LogLevel, Modes, ICommandLineOptions } from "../common/Interfaces";
 import { logger } from "../common/Logger";
 import { Utility } from "../common/Utilities";
@@ -46,6 +46,7 @@ export function ProcesCommandLine(): ICommandLineOptions {
     ret[paramConfig] = configFileName;
     ret[paramSourceToken] = parsedArgs[paramSourceToken];
     ret[paramTargetToken] = parsedArgs[paramTargetToken];
+    ret[paramOverwriteProcessOnTarget] = !!parsedArgs[paramOverwriteProcessOnTarget];
 
     return <ICommandLineOptions>ret;
 }
