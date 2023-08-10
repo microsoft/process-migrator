@@ -3,7 +3,7 @@
     "noImplicitAny": false,
     "noImplicitThis": true,
     "lib": ["es6", "dom", "es2015.iterable"],
-    "outDir": "../../build/NodeJs",
+    "outDir": "../../build/nodejs",
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,

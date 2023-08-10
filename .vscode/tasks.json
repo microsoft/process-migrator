@@ -2,14 +2,14 @@
     "tasks": [
         {
             "type": "typescript",
-            "tsconfig": "src\\NodeJs\\tsconfig.json",
+            "tsconfig": "src\\nodejs\\tsconfig.json",
             "problemMatcher": [
                 "$tsc"
             ]
         },
         {
             "type": "typescript",
-            "tsconfig": "src\\Browser\\tsconfig.json",
+            "tsconfig": "src\\browser\\tsconfig.json",
             "problemMatcher": [
                 "$tsc"
             ]

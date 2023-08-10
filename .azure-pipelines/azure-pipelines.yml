@@ -1,0 +1,34 @@
+variables:
+  - name: version.MajorMinor # Manually adjust the version number as needed for semantic versioning. Patch is auto-incremented.
+    value: '0.9'
+  
+name: $(version.MajorMinor)$(rev:.r)
+
+trigger:
+  branches:
+    include:
+    - master
+
+pr: none
+
+resources:
+  repositories:
+    - repository: pipeline-templates
+      type: git
+      name: Sage/pipeline-templates
+      ref: main
+
+stages:
+- stage: 'Build'
+  jobs:
+  - job: 'BuildPack'
+    displayName: "Build and package"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '16.x'
+    - template: build.yml@pipeline-templates
+    - template: package-npm.yml@pipeline-templates
