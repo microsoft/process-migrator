@@ -33,14 +33,15 @@
   "devDependencies": {
     "@types/minimist": "^1.2.2",
     "@types/mkdirp": "^0.5.2",
-    "@types/node": "^8.10.15",
-    "typescript": "^2.8.1"
+    "@types/node": "20.4.9",
+    "ts-node": "^8.0.2",
+    "typescript": "4.4.3"
   },
   "dependencies": {
-    "azure-devops-node-api": "~10.2.2",
-    "guid-typescript": "~1.0.8",
-    "jsonc-parser": "~3.1.0",
-    "minimist": "~1.2.7",
+    "azure-devops-node-api": "6.6.0",
+    "guid-typescript": "~1.0.9",
+    "jsonc-parser": "~3.2.0",
+    "minimist": "~1.2.8",
     "mkdirp": "^1.0.4",
     "url": "^0.11.0",
     "vss-web-extension-sdk": "5.141.0"
