@@ -6,3 +6,4 @@ build/browser/
 build/tests/
 test/
 *.js.map
+SECURITY.md
