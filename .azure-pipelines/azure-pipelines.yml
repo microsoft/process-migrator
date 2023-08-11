@@ -32,3 +32,13 @@ stages:
         versionSpec: '16.x'
     - template: build.yml@pipeline-templates
     - template: package-npm.yml@pipeline-templates
+
+- stage: 'DeployTest'
+  displayName: 'Deploy to Test'
+  dependsOn: DeployDev
+  condition: succeeded()
+  jobs:
+  - template: deploy-npm.yml@pipeline-templates
+    parameters:
+      environment: 'test'
+      publishFeed: $(Sage/extensions)
