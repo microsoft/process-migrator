@@ -35,7 +35,7 @@ stages:
 
 - stage: 'DeployTest'
   displayName: 'Deploy to Test'
-  dependsOn: DeployDev
+  dependsOn: Build
   condition: succeeded()
   jobs:
   - template: deploy-npm.yml@pipeline-templates
