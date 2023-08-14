@@ -34,7 +34,7 @@ stages:
     - template: package-npm.yml@pipeline-templates
 
 - stage: 'DeployTest'
-  displayName: 'Deploy to Test'
+  displayName: 'Deploy to Test (Azure Artifact)'
   dependsOn: Build
   condition: succeeded()
   jobs:
@@ -42,3 +42,13 @@ stages:
     parameters:
       environment: 'test'
       publishFeed: 'Sage/extensions'
+
+- stage: 'DeployPublic'
+  displayName: 'Deploy to Public (NPM)'
+  dependsOn: DeployTest
+  condition: succeeded()
+  jobs:
+  - template: deploy-npm.yml@pipeline-templates
+    parameters:
+      environment: 'public'
+      publishEndpoint: 'npm-process-migrator'
