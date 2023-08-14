@@ -6,7 +6,8 @@ steps:
     echo 'registry=https://pkgs.dev.azure.com/vsalmchamps/Sage/_packaging/extensions/npm/registry/' > .npmrc
     echo 'always-auth=true' >> .npmrc
     ls -R
-    cat .npmrc
+    pwd
+    cat /home/vsts/work/1/s/.npmrc
   displayName: 'Config .npmrc'
 
 - task: npmAuthenticate@0
