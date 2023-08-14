@@ -9,7 +9,7 @@ steps:
 
 - task: npmAuthenticate@0
   inputs:
-    workingFile: './npmrc'
+    workingFile: './.npmrc'
 
 - script: |
     npm install npm install process-migrator@0.9.16 -g
