@@ -13,5 +13,5 @@ steps:
     customFeed: 'Sage/extensions'
 
 - script: |
-    process-migrator
+    ./process-migrator
   displayName: 'Testing process migrator'
