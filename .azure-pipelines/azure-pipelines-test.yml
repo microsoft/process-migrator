@@ -5,9 +5,13 @@ steps:
 - script: |
     echo 'registry=https://pkgs.dev.azure.com/vsalmchamps/Sage/_packaging/extensions/npm/registry/' > .npmrc
     echo 'always-auth=true' >> .npmrc
+  displayName: 'Config .npmrc'
 
-    vsts-npm-auth -config .npmrc
+- task: npmAuthenticate@0
+  inputs:
+    workingFile: './npmrc'
 
+- script: |
     npm install npm install process-migrator@0.9.16 -g
 
     process-migrator
