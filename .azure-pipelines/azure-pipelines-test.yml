@@ -1,0 +1,14 @@
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: |
+    echo 'registry=https://pkgs.dev.azure.com/vsalmchamps/Sage/_packaging/extensions/npm/registry/' > .npmrc
+    echo 'always-auth=true' >> .npmrc
+
+    vsts-npm-auth -config .npmrc
+
+    npm install npm install process-migrator@0.9.16 -g
+
+    process-migrator
+  displayName: 'Testing process migrator'
