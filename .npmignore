@@ -6,4 +6,5 @@ build/browser/
 build/tests/
 test/
 *.js.map
+package-lock.json
 SECURITY.md
