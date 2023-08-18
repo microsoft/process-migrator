@@ -23,7 +23,7 @@ To run this tool you must have both NodeJS and NPM installed. They are available
 
 - From the root of source, run `npm install`
 - Build by `npm run build`
-- Execute through `node build\nodejs\nodejs\main.js <args>`
+- Execute through `node build\nodejs\nodejs\Main.js <args>`
 
 ## Documentation
 

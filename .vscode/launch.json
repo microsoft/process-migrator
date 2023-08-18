@@ -5,7 +5,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch process migrate",
-            "program": "${workspaceFolder}/build/nodejs/nodejs/main.js",
+            "program": "${workspaceFolder}/build/nodejs/nodejs/Main.js",
             "sourceMaps": true,
             "args": [
             ]
