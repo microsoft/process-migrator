@@ -3,4 +3,5 @@ output/*
 build/*
 test/*
 /.vs
-.DS_Store
+**/.DS_Store
+
