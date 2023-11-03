@@ -2,8 +2,13 @@
   "compilerOptions": {
     "noImplicitAny": false,
     "noImplicitThis": true,
+<<<<<<< HEAD:src/NodeJs/tsconfig.json
     "lib": ["es2017","es6", "dom", "es2015.iterable"],
     "outDir": "../../build/NodeJs",
+=======
+    "lib": ["es6", "dom", "es2015.iterable"],
+    "outDir": "../../build/nodejs",
+>>>>>>> master:src/nodejs/tsconfig.json
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,

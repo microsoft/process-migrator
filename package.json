@@ -11,6 +11,7 @@
   },
   "scripts": {
     "build": "tsc -p src/nodejs/tsconfig.json && tsc -p src/browser/tsconfig.json",
+    "build:release": "tsc -p src/nodejs/tsconfig.json && tsc -p src/browser/tsconfig.json",
     "bn": "tsc -p src/nodejs/tsconfig.json",
     "bb": "tsc -p src/browser/tsconfig.json"
   },
