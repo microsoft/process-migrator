@@ -8,3 +8,4 @@ test/
 *.js.map
 package-lock.json
 SECURITY.md
+.DS_Store
