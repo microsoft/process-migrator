@@ -39,7 +39,7 @@
     "typescript": "4.4.3"
   },
   "dependencies": {
-    "azure-devops-node-api": "6.6.0",
+    "azure-devops-node-api": "^6.6.0",
     "guid-typescript": "~1.0.9",
     "jsonc-parser": "~3.2.0",
     "minimist": "~1.2.8",
