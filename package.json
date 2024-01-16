@@ -4,7 +4,7 @@
   "description": "Proces import/export Node.js application",
   "main": "",
   "bin": {
-    "process-migrator": "build/nodejs/nodejs/main.js"
+    "process-migrator": "build/nodejs/nodejs/Main.js"
   },
   "engines": {
     "node": ">=8.11.2"
