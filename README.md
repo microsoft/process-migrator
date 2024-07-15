@@ -65,7 +65,12 @@ To run this tool you must have both NodeJS and NPM installed. They are available
    1) The tool needs to be able to modify the definition of work items and work item types (to add custom fields for example).
 
 
-   # Support
+## Contributing
+
+We welcome contributions to improve the Process Migrator Azure DevOps extension. If you would like to contribute, please fork the repository and create a pull request with your changes. Your contributions help enhance the functionality and usability of the extension for the entire community.
+
+
+# Support
 
 ## How to file issues and get help
 
