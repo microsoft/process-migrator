@@ -63,3 +63,19 @@ To run this tool you must have both NodeJS and NPM installed. They are available
    2) For identity field default value, you may use 'continueOnFieldDefaultValueFailure' option to proceed with rest of import when such error is occurred.
 - Personal Access Token (PAT) needs to allow "Read, write, & manage" access for the "Work Items" scope
    1) The tool needs to be able to modify the definition of work items and work item types (to add custom fields for example).
+
+
+   # Support
+
+## How to file issues and get help
+
+This project uses [GitHub Issues](https://github.com/microsoft/process-migrator/issues) to track bugs and feature requests. Please search the existing issues before filing new issues to avoid duplicates. For new issues, file your bug or feature request as a new Issue. 
+
+## Microsoft Support Policy
+Support for this project is limited to the resources listed above.
+
+
+
+
+   
+

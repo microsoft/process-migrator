@@ -1,0 +1,142 @@
+[INFORMATION] [2024-05-08T14:14:56.456Z] Full log is sent to '/Users/amintiti/process-migrator/output\processMigrator.log' 
+[VERBOSE] [2024-05-08T14:14:56.459Z] Keyboard listener added
+[VERBOSE] [2024-05-08T14:14:56.459Z] Begin step 'Get rest client on source account 'https://dev.azure.com/solidify-ext-dev/''.
+[VERBOSE] [2024-05-08T14:14:56.825Z] Finished step 'Get rest client on source account 'https://dev.azure.com/solidify-ext-dev/''.
+[INFORMATION] [2024-05-08T14:14:56.826Z] Export process started.
+[VERBOSE] [2024-05-08T14:14:56.826Z] Begin step 'Get source process Id from name'.
+[VERBOSE] [2024-05-08T14:14:56.989Z] Finished step 'Get source process Id from name'.
+[VERBOSE] [2024-05-08T14:14:56.990Z] Begin step 'Get artifacts from source process'.
+[VERBOSE] [2024-05-08T14:14:58.308Z] Finished step 'Get artifacts from source process'.
+[INFORMATION] [2024-05-08T14:14:58.309Z] Export process completed.
+[VERBOSE] [2024-05-08T14:14:58.309Z] Begin step 'Write process payload to file'.
+[VERBOSE] [2024-05-08T14:14:58.312Z] Finished step 'Write process payload to file'.
+[INFORMATION] [2024-05-08T14:14:58.312Z] Export process completed successfully to '/Users/amintiti/process-migrator/output\process.json'.
+[VERBOSE] [2024-05-08T14:14:58.312Z] Begin step 'Get rest client on target account 'https://dev.azure.com/testconfigpro/''.
+[VERBOSE] [2024-05-08T14:14:58.501Z] Finished step 'Get rest client on target account 'https://dev.azure.com/testconfigpro/''.
+[INFORMATION] [2024-05-08T14:14:58.501Z] Process import started.
+[VERBOSE] [2024-05-08T14:14:58.501Z] Begin step 'Pre-import validation on target account'.
+[VERBOSE] [2024-05-08T14:14:58.502Z] Begin step 'Validate process existence on target account'.
+[VERBOSE] [2024-05-08T14:14:58.502Z] Begin step 'Get processes on target account'.
+[VERBOSE] [2024-05-08T14:14:58.712Z] Finished step 'Get processes on target account'.
+[VERBOSE] [2024-05-08T14:14:58.713Z] Finished step 'Validate process existence on target account'.
+[VERBOSE] [2024-05-08T14:14:58.713Z] Begin step 'Validate fields on target account'.
+[VERBOSE] [2024-05-08T14:14:58.714Z] Begin step 'Get fields on target account'.
+[VERBOSE] [2024-05-08T14:14:59.003Z] Finished step 'Get fields on target account'.
+[VERBOSE] [2024-05-08T14:14:59.006Z] Finished step 'Validate fields on target account'.
+[VERBOSE] [2024-05-08T14:14:59.007Z] Begin step 'Validate picklists on target account'.
+[VERBOSE] [2024-05-08T14:14:59.008Z] Finished step 'Validate picklists on target account'.
+[VERBOSE] [2024-05-08T14:14:59.008Z] Finished step 'Pre-import validation on target account'.
+[VERBOSE] [2024-05-08T14:14:59.008Z] Begin step 'Create process on target account'.
+[VERBOSE] [2024-05-08T14:14:59.008Z] Begin step 'Create process 'Agile-Dentsu''.
+[VERBOSE] [2024-05-08T14:14:59.116Z] Finished step 'Create process 'Agile-Dentsu''.
+[VERBOSE] [2024-05-08T14:14:59.116Z] Finished step 'Create process on target account'.
+[VERBOSE] [2024-05-08T14:14:59.117Z] Begin step 'Create artifacts on target process'.
+[VERBOSE] [2024-05-08T14:14:59.117Z] Begin step 'Import picklists on target account'.
+[VERBOSE] [2024-05-08T14:14:59.117Z] Begin step 'Create picklist for field Custom.Source'.
+[VERBOSE] [2024-05-08T14:14:59.312Z] Finished step 'Create picklist for field Custom.Source'.
+[VERBOSE] [2024-05-08T14:14:59.312Z] Finished step 'Import picklists on target account'.
+[VERBOSE] [2024-05-08T14:14:59.312Z] Begin step 'Import fields on target account'.
+[VERBOSE] [2024-05-08T14:14:59.313Z] Begin step 'Get fields to be created on target process'.
+[VERBOSE] [2024-05-08T14:14:59.483Z] Finished step 'Get fields to be created on target process'.
+[VERBOSE] [2024-05-08T14:14:59.483Z] Finished step 'Import fields on target account'.
+[VERBOSE] [2024-05-08T14:14:59.483Z] Begin step 'Import work item types on target process'.
+[VERBOSE] [2024-05-08T14:14:59.638Z] Finished step 'Import work item types on target process'.
+[VERBOSE] [2024-05-08T14:14:59.638Z] Begin step 'Add field to work item types on target process'.
+[VERBOSE] [2024-05-08T14:14:59.639Z] Begin step 'Add field 'Custom.Migrator' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:14:59.737Z] Finished step 'Add field 'Custom.Migrator' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:14:59.738Z] Begin step 'Add field 'Custom.IssueCount' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:14:59.898Z] Finished step 'Add field 'Custom.IssueCount' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:14:59.899Z] Begin step 'Add field 'Custom.Source' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:00.057Z] Finished step 'Add field 'Custom.Source' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:00.058Z] Begin step 'Add field 'Custom.Trainee' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:00.162Z] Finished step 'Add field 'Custom.Trainee' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:00.162Z] Begin step 'Add field 'Custom.ProjectOwner' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:00.373Z] Finished step 'Add field 'Custom.ProjectOwner' to work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:00.373Z] Finished step 'Add field to work item types on target process'.
+[VERBOSE] [2024-05-08T14:15:00.373Z] Begin step 'Import work item form layouts on target process'.
+[VERBOSE] [2024-05-08T14:15:00.374Z] Begin step 'Get layout on target process for work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:00.501Z] Finished step 'Get layout on target process for work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:00.501Z] Begin step 'Edit 'Agile.Feature.Feature' page in Agile-Dentsu.Feature'.
+[VERBOSE] [2024-05-08T14:15:00.647Z] Finished step 'Edit 'Agile.Feature.Feature' page in Agile-Dentsu.Feature'.
+[VERBOSE] [2024-05-08T14:15:00.647Z] Start import inherited group changes
+[VERBOSE] [2024-05-08T14:15:00.648Z] Start import custom groups and all controls
+[VERBOSE] [2024-05-08T14:15:00.648Z] Begin step 'Edit control 'Microsoft.VSTS.Common.Priority' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:00.731Z] Finished step 'Edit control 'Microsoft.VSTS.Common.Priority' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:00.732Z] Begin step 'Edit control 'Microsoft.VSTS.Common.Risk' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:00.917Z] Finished step 'Edit control 'Microsoft.VSTS.Common.Risk' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:00.917Z] Begin step 'Edit control 'Microsoft.VSTS.Scheduling.Effort' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.002Z] Finished step 'Edit control 'Microsoft.VSTS.Scheduling.Effort' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.002Z] Begin step 'Edit control 'Microsoft.VSTS.Common.BusinessValue' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.078Z] Finished step 'Edit control 'Microsoft.VSTS.Common.BusinessValue' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.078Z] Begin step 'Edit control 'Microsoft.VSTS.Common.TimeCriticality' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.159Z] Finished step 'Edit control 'Microsoft.VSTS.Common.TimeCriticality' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.160Z] Begin step 'Edit control 'Microsoft.VSTS.Scheduling.StartDate' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.242Z] Finished step 'Edit control 'Microsoft.VSTS.Scheduling.StartDate' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.242Z] Begin step 'Edit control 'Microsoft.VSTS.Scheduling.TargetDate' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.345Z] Finished step 'Edit control 'Microsoft.VSTS.Scheduling.TargetDate' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.345Z] Begin step 'Create control 'Custom.Migrator' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.442Z] Finished step 'Create control 'Custom.Migrator' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.442Z] Begin step 'Create control 'Custom.IssueCount' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.573Z] Finished step 'Create control 'Custom.IssueCount' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.573Z] Begin step 'Create control 'Custom.Source' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.682Z] Finished step 'Create control 'Custom.Source' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.682Z] Begin step 'Create control 'Custom.Trainee' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.817Z] Finished step 'Create control 'Custom.Trainee' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.818Z] Begin step 'Create control 'Custom.ProjectOwner' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.898Z] Finished step 'Create control 'Custom.ProjectOwner' in group 'Agile.Feature.Feature.Planning' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:01.898Z] Begin step 'Edit control 'Microsoft.VSTS.Common.ValueArea' in group 'Agile.Feature.Feature.Classification' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:02.012Z] Finished step 'Edit control 'Microsoft.VSTS.Common.ValueArea' in group 'Agile.Feature.Feature.Classification' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:02.012Z] Begin step 'Edit control 'Deployments' in group 'Agile.Feature.Feature.Deployment' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:02.116Z] Finished step 'Edit control 'Deployments' in group 'Agile.Feature.Feature.Deployment' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:02.117Z] Begin step 'Edit control 'Development' in group 'Agile.Feature.Feature.Development' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:02.217Z] Finished step 'Edit control 'Development' in group 'Agile.Feature.Feature.Development' in page 'Agile.Feature.Feature' in work item type 'Agile-Dentsu.Feature'.'.
+[VERBOSE] [2024-05-08T14:15:02.218Z] Finished step 'Import work item form layouts on target process'.
+[VERBOSE] [2024-05-08T14:15:02.218Z] Begin step 'Import states on target process'.
+[VERBOSE] [2024-05-08T14:15:02.219Z] Begin step 'Get states on target process for work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:02.322Z] Finished step 'Get states on target process for work item type 'Agile-Dentsu.Feature''.
+[VERBOSE] [2024-05-08T14:15:02.322Z] Begin step 'Delete state 'New' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.546Z] Finished step 'Delete state 'New' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.546Z] Begin step 'Delete state 'Active' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.636Z] Finished step 'Delete state 'Active' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.636Z] Begin step 'Delete state 'Resolved' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.744Z] Finished step 'Delete state 'Resolved' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.744Z] Begin step 'Delete state 'Closed' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.853Z] Finished step 'Delete state 'Closed' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.853Z] Begin step 'Delete state 'Removed' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.936Z] Finished step 'Delete state 'Removed' in 'Agile-Dentsu.Feature' work item type'.
+[VERBOSE] [2024-05-08T14:15:02.937Z] Finished step 'Import states on target process'.
+[VERBOSE] [2024-05-08T14:15:02.937Z] Begin step 'Import rules on target process'.
+[VERBOSE] [2024-05-08T14:15:02.938Z] Finished step 'Import rules on target process'.
+[VERBOSE] [2024-05-08T14:15:02.938Z] Begin step 'Import behaviors on target process'.
+[VERBOSE] [2024-05-08T14:15:02.939Z] Begin step 'Get behaviors on target account'.
+[VERBOSE] [2024-05-08T14:15:03.032Z] Finished step 'Get behaviors on target account'.
+[VERBOSE] [2024-05-08T14:15:03.033Z] Begin step 'Replace behavior 'System.RequirementBacklogBehavior' with fake name 'Stories''.
+[VERBOSE] [2024-05-08T14:15:03.122Z] Finished step 'Replace behavior 'System.RequirementBacklogBehavior' with fake name 'Stories''.
+[VERBOSE] [2024-05-08T14:15:03.123Z] Begin step 'Replace behavior 'Microsoft.VSTS.Agile.EpicBacklogBehavior' with fake name 'Epics''.
+[VERBOSE] [2024-05-08T14:15:03.229Z] Finished step 'Replace behavior 'Microsoft.VSTS.Agile.EpicBacklogBehavior' with fake name 'Epics''.
+[VERBOSE] [2024-05-08T14:15:03.229Z] Begin step 'Replace behavior 'Microsoft.VSTS.Agile.FeatureBacklogBehavior' with fake name 'Features''.
+[VERBOSE] [2024-05-08T14:15:03.333Z] Finished step 'Replace behavior 'Microsoft.VSTS.Agile.FeatureBacklogBehavior' with fake name 'Features''.
+[VERBOSE] [2024-05-08T14:15:03.334Z] Begin step 'Replace behavior 'System.OrderedBehavior' with fake name 'Ordered''.
+[VERBOSE] [2024-05-08T14:15:03.406Z] Finished step 'Replace behavior 'System.OrderedBehavior' with fake name 'Ordered''.
+[VERBOSE] [2024-05-08T14:15:03.407Z] Begin step 'Replace behavior 'System.TaskBacklogBehavior' with fake name 'Tasks''.
+[VERBOSE] [2024-05-08T14:15:03.493Z] Finished step 'Replace behavior 'System.TaskBacklogBehavior' with fake name 'Tasks''.
+[VERBOSE] [2024-05-08T14:15:03.493Z] Begin step 'Replace behavior 'System.PortfolioBacklogBehavior' with fake name 'Portfolio''.
+[VERBOSE] [2024-05-08T14:15:03.603Z] Finished step 'Replace behavior 'System.PortfolioBacklogBehavior' with fake name 'Portfolio''.
+[VERBOSE] [2024-05-08T14:15:03.603Z] Begin step 'Replace behavior 'System.RequirementBacklogBehavior' to it's real name 'Stories''.
+[VERBOSE] [2024-05-08T14:15:03.668Z] Finished step 'Replace behavior 'System.RequirementBacklogBehavior' to it's real name 'Stories''.
+[VERBOSE] [2024-05-08T14:15:03.668Z] Begin step 'Replace behavior 'Microsoft.VSTS.Agile.EpicBacklogBehavior' to it's real name 'Epics''.
+[VERBOSE] [2024-05-08T14:15:03.766Z] Finished step 'Replace behavior 'Microsoft.VSTS.Agile.EpicBacklogBehavior' to it's real name 'Epics''.
+[VERBOSE] [2024-05-08T14:15:03.766Z] Begin step 'Replace behavior 'Microsoft.VSTS.Agile.FeatureBacklogBehavior' to it's real name 'Features''.
+[VERBOSE] [2024-05-08T14:15:03.863Z] Finished step 'Replace behavior 'Microsoft.VSTS.Agile.FeatureBacklogBehavior' to it's real name 'Features''.
+[VERBOSE] [2024-05-08T14:15:03.863Z] Begin step 'Replace behavior 'System.OrderedBehavior' to it's real name 'Ordered''.
+[VERBOSE] [2024-05-08T14:15:03.949Z] Finished step 'Replace behavior 'System.OrderedBehavior' to it's real name 'Ordered''.
+[VERBOSE] [2024-05-08T14:15:03.949Z] Begin step 'Replace behavior 'System.TaskBacklogBehavior' to it's real name 'Tasks''.
+[VERBOSE] [2024-05-08T14:15:04.012Z] Finished step 'Replace behavior 'System.TaskBacklogBehavior' to it's real name 'Tasks''.
+[VERBOSE] [2024-05-08T14:15:04.013Z] Begin step 'Replace behavior 'System.PortfolioBacklogBehavior' to it's real name 'Portfolio''.
+[VERBOSE] [2024-05-08T14:15:04.081Z] Finished step 'Replace behavior 'System.PortfolioBacklogBehavior' to it's real name 'Portfolio''.
+[VERBOSE] [2024-05-08T14:15:04.081Z] Finished step 'Import behaviors on target process'.
+[VERBOSE] [2024-05-08T14:15:04.082Z] Begin step 'Add behavior to work item types on target process'.
+[VERBOSE] [2024-05-08T14:15:04.082Z] Finished step 'Add behavior to work item types on target process'.
+[VERBOSE] [2024-05-08T14:15:04.082Z] Finished step 'Create artifacts on target process'.
+[INFORMATION] [2024-05-08T14:15:04.082Z] Process import completed successfully.
+[INFORMATION] [2024-05-08T14:15:04.083Z] Total elapsed time: '7.63' seconds.
