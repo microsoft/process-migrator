@@ -1,5 +1,14 @@
 # VSTS Process Migrator for Node.js
 
+**NOTE:** When running the process migrator on Node.js v23.10+ you will get the below error:
+
+> C:\Users***\AppData\Roaming\npm\node_modules\process-migrator\build\nodejs\nodejs\NodeJsUtilities.js:23
+> if (!util_1.isFunction(stdin.setRawMode)) {
+> ^
+> TypeError: util_1.isFunction is not a function
+
+We are working on resolving this (see issues #107, #108).
+
 This application provide you ability to automate the [Process](https://docs.microsoft.com/en-us/vsts/work/customize/process/manage-process?view=vsts) export/import across VSTS accounts through Node.js CLI.
 
 **NOTE:** This only works with 'Inherited Process', for 'XML process' you may upload/download process as ZIP. 
