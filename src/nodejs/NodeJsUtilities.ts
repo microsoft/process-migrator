@@ -3,7 +3,6 @@ import { existsSync, writeFileSync } from "fs";
 import { dirname, normalize } from "path";
 import { sync as mkdirpSync } from "mkdirp";
 import * as readline from "readline";
-import { isFunction } from "util";
 import { defaultLogFileName } from "../common/Constants";
 import { IConfigurationOptions, IRestClients } from "../common/Interfaces";
 import { logger } from "../common/Logger";
@@ -22,7 +21,7 @@ export class NodeJsUtility extends Utility {
 
     public static startCancellationListener() {
         const stdin = process.stdin;
-        if (!isFunction(stdin.setRawMode)) {
+        if (typeof stdin.setRawMode !== "function") {
             logger.logInfo(`We are running inside a TTY does not support RAW mode, you must cancel operation with CTRL+C`);
             return;
         }
