@@ -1,6 +1,6 @@
 variables:
   - name: version.MajorMinor # Manually adjust the version number as needed for semantic versioning. Patch is auto-incremented.
-    value: '0.9'
+    value: '0.10'
   
 name: $(version.MajorMinor)$(rev:.r)
 
