@@ -1,5 +1,6 @@
 import * as WITProcessDefinitionsInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
 import * as WITProcessInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessInterfaces";
+import * as WITInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 import * as vsts_NOREQUIRE from "azure-devops-node-api/WebApi";
 import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingProcessDefinitionsApi";
 import { IWorkItemTrackingProcessApi as WITProcessApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingProcessApi";
@@ -24,7 +25,7 @@ export class ProcessExporter {
     }
 
     private async _getSourceProcessId(): Promise<string> {
-        const processes = await Utility.tryCatchWithKnownError(() => this._witProcessApi.getProcesses(),
+        const processes = await Utility.tryCatchWithKnownError(() => this._witProcessApi.getListOfProcesses(),
             () => new ExportError(`Error getting processes on source account '${this._config.sourceAccountUrl}, check account url, token and token permissions.`));
 
         if (!processes) { // most likely 404
@@ -38,7 +39,7 @@ export class ProcessExporter {
         }
 
         const process = matchProcesses[0];
-        if (process.properties.class !== WITProcessInterfaces.ProcessClass.Derived) {
+        if (process.customizationType === WITProcessInterfaces.CustomizationType.System) {
             throw new ExportError(`Proces '${this._config.sourceProcessName}' is not a derived process, not supported.`);
         }
         return process.typeId;
@@ -47,7 +48,7 @@ export class ProcessExporter {
     private async _getComponents(processId: string): Promise<IProcessPayload> {
         let _process: WITProcessInterfaces.ProcessModel;
         let _behaviorsCollectionScope: WITProcessInterfaces.WorkItemBehavior[];
-        let _fieldsCollectionScope: WITProcessInterfaces.FieldModel[];
+        let _fieldsCollectionScope: WITInterfaces.WorkItemField[];
         const _fieldsWorkitemtypeScope: IWITypeFields[] = [];
         const _layouts: IWITLayout[] = [];
         const _states: IWITStates[] = [];
@@ -58,10 +59,10 @@ export class ProcessExporter {
         const _nonSystemWorkItemTypes: WITProcessDefinitionsInterfaces.WorkItemTypeModel[] = [];
         const processPromises: Promise<any>[] = [];
 
-        processPromises.push(this._witProcessApi.getProcessById(processId).then(process => _process = process));
-        processPromises.push(this._witProcessApi.getFields(processId).then(fields => _fieldsCollectionScope = fields));
-        processPromises.push(this._witProcessApi.getBehaviors(processId).then(behaviors => _behaviorsCollectionScope = behaviors));
-        processPromises.push(this._witProcessApi.getWorkItemTypes(processId).then(workitemtypes => {
+        processPromises.push(this._witProcessApi.getProcessByItsId(processId).then(process => _process = process));
+        processPromises.push(this._witApi.getFields().then(fields => _fieldsCollectionScope = fields));
+        processPromises.push(this._witProcessApi.getProcessBehaviors(processId).then(behaviors => _behaviorsCollectionScope = behaviors));
+        processPromises.push(this._witProcessDefinitionApi.getWorkItemTypes(processId).then(workitemtypes => {
             const perWitPromises: Promise<any>[] = [];
 
             for (const workitemtype of workitemtypes) {
@@ -118,7 +119,7 @@ export class ProcessExporter {
                         _states.push(witStates);
                     }));
 
-                    currentWitPromises.push(this._witProcessApi.getWorkItemTypeRules(processId, workitemtype.id).then(rules => {
+                    currentWitPromises.push(this._witProcessApi.getProcessWorkItemTypeRules(processId, workitemtype.id).then(rules => {
                         const witRules: IWITRules = {
                             workItemTypeRefName: workitemtype.id,
                             rules: rules

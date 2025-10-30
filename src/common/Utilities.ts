@@ -25,6 +25,47 @@ export class Utility {
         return outField;
     }
 
+    /** Convert from WIT WorkItemField to WITProcessDefinitions FieldModel
+     * @param workItemField 
+     */
+    public static WITToWITProcessDefinitionsFieldModel(workItemField: WITInterfaces.WorkItemField): WITProcessDefinitionsInterfaces.FieldModel {
+
+        let outField: WITProcessDefinitionsInterfaces.FieldModel = {
+            description: workItemField.description,
+            id: workItemField.referenceName,
+            name: workItemField.name,
+            type: Utility.WITToWITProcessDefinitionsFieldType(workItemField.type, workItemField.isIdentity),
+            url: workItemField.url,
+            pickList: null
+        }
+        return outField;
+    }
+
+    /** Convert from WorkItemTracking FieldType to WorkItemTrackingProcessDefinitions FieldType
+     * @param witFieldType 
+     */
+    public static WITToWITProcessDefinitionsFieldType(witFieldType: WITInterfaces.FieldType, fieldIsIdentity: boolean): WITProcessDefinitionsInterfaces.FieldType {
+        if (fieldIsIdentity) { return WITProcessDefinitionsInterfaces.FieldType.Identity; }
+
+        switch (witFieldType) {
+            case WITInterfaces.FieldType.String: { return WITProcessDefinitionsInterfaces.FieldType.String; }
+            case WITInterfaces.FieldType.Integer: { return WITProcessDefinitionsInterfaces.FieldType.Integer; }
+            case WITInterfaces.FieldType.DateTime: { return WITProcessDefinitionsInterfaces.FieldType.DateTime; }
+            case WITInterfaces.FieldType.PlainText: { return WITProcessDefinitionsInterfaces.FieldType.PlainText; }
+            case WITInterfaces.FieldType.Html: { return WITProcessDefinitionsInterfaces.FieldType.Html; }
+            case WITInterfaces.FieldType.TreePath: { return WITProcessDefinitionsInterfaces.FieldType.TreePath; }
+            case WITInterfaces.FieldType.History: { return WITProcessDefinitionsInterfaces.FieldType.History; }
+            case WITInterfaces.FieldType.Double: { return WITProcessDefinitionsInterfaces.FieldType.Double; }
+            case WITInterfaces.FieldType.Guid: { return WITProcessDefinitionsInterfaces.FieldType.Guid; }
+            case WITInterfaces.FieldType.Boolean: { return WITProcessDefinitionsInterfaces.FieldType.Boolean; }
+            case WITInterfaces.FieldType.Identity: { return WITProcessDefinitionsInterfaces.FieldType.Identity; }
+            case WITInterfaces.FieldType.PicklistInteger: { return WITProcessDefinitionsInterfaces.FieldType.PicklistInteger; }
+            case WITInterfaces.FieldType.PicklistString: { return WITProcessDefinitionsInterfaces.FieldType.PicklistString; }
+            case WITInterfaces.FieldType.PicklistDouble: { return WITProcessDefinitionsInterfaces.FieldType.PicklistDouble; }
+            default: { throw new Error(`Failed to convert from WorkItemTracking.FieldType to WorkItemTrackingProcessDefinitions.FieldType, unrecognized enum value '${witFieldType}'`) }
+        }
+    }
+
     /** Convert from WorkItemTrackingProcess FieldType to WorkItemTracking FieldType
      * @param witProcessFieldType 
      */
