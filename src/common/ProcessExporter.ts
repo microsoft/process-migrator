@@ -40,7 +40,7 @@ export class ProcessExporter {
 
         const process = matchProcesses[0];
         if (process.customizationType === WITProcessInterfaces.CustomizationType.System) {
-            throw new ExportError(`Proces '${this._config.sourceProcessName}' is not a derived process, not supported.`);
+            throw new ExportError(`Process '${this._config.sourceProcessName}' is not a derived process, not supported.`);
         }
         return process.typeId;
     }

@@ -445,11 +445,11 @@ export class ProcessImporter {
 
     private async _importWITRule(rule: WITProcessInterfaces.ProcessRule, witRulesEntry: IWITRules, payload: IProcessPayload) {
         try {
-            const createdRule = await Engine.Task(
+            const createdRule: WITProcessInterfaces.ProcessRule = await Engine.Task(
                 () => this._witProcessApi.addProcessWorkItemTypeRule(rule, payload.process.typeId, witRulesEntry.workItemTypeRefName),
                 `Create rule '${rule.id}' in work item type '${witRulesEntry.workItemTypeRefName}'`);
 
-            if (!createdRule || !(createdRule as any).id) {
+            if (!createdRule || !createdRule.id) {
                 throw new ImportError(`Unable to create rule '${rule.id}' in work item type '${witRulesEntry.workItemTypeRefName}', server returned empty result or id.`);
             }
         }
@@ -475,7 +475,7 @@ export class ProcessImporter {
     }
 
     private async _importBehaviors(payload: IProcessPayload): Promise<void> {
-        const behaviorsOnTarget = await Utility.tryCatchWithKnownError(
+        const behaviorsOnTarget: WITProcessInterfaces.ProcessBehavior[] = await Utility.tryCatchWithKnownError(
             async () => {
                 return await Engine.Task(
                     () => this._witProcessApi.getProcessBehaviors(payload.process.typeId),
@@ -486,7 +486,7 @@ export class ProcessImporter {
 
         for (const behavior of payload.behaviors) {
             try {
-                const existing = (behaviorsOnTarget as any[]).some(b => b.id === behavior.id);
+                const existing = behaviorsOnTarget.some(b => b.referenceName === behavior.id);
                 if (!existing) {
                     const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = Utility.toCreateBehavior(behavior);
                     // Use a random name to avoid conflict on scenarios involving a name swap 
@@ -763,13 +763,13 @@ export class ProcessImporter {
 
     private async _createProcess(payload: IProcessPayload) {
         const createProcessModel: WITProcessInterfaces.CreateProcessModel = Utility.ProcessModelToCreateProcessModel(payload.process);
-        const createdProcess = await Engine.Task(
+        const createdProcess: WITProcessInterfaces.ProcessInfo = await Engine.Task(
             () => this._witProcessApi.createNewProcess(createProcessModel),
             `Create process '${createProcessModel.name}'`);
         if (!createdProcess) {
             throw new ImportError(`Failed to create process '${createProcessModel.name}' on target account.`);
         }
-        payload.process.typeId = (createdProcess as any).typeId;
+        payload.process.typeId = createdProcess.typeId;
     }
 
     public async importProcess(payload: IProcessPayload): Promise<void> {
