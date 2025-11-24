@@ -1,4 +1,4 @@
-# VSTS Process Migrator for Node.js
+# Azure DevOps Process Migrator for Node.js
 
 **NOTE:** When running the process migrator on Node.js v23.10+ you will get the below error:
 
