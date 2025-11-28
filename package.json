@@ -32,18 +32,18 @@
   "author": "Microsoft",
   "license": "MIT",
   "devDependencies": {
-    "@types/minimist": "^1.2.2",
-    "@types/mkdirp": "^0.5.2",
-    "@types/node": "8.10.0",
-    "typescript": "^2.8.1"
+    "@types/minimist": "^1.2.5",
+    "@types/mkdirp": "^1.0.2",
+    "@types/node": "^20.19.24",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "azure-devops-node-api": "^6.5.0",
-    "guid-typescript": "~1.0.8",
-    "jsonc-parser": "~3.1.0",
+    "azure-devops-node-api": "^15.1.1",
+    "guid-typescript": "^1.0.9",
+    "jsonc-parser": "^3.3.1",
     "minimist": "~1.2.7",
-    "mkdirp": "^1.0.4",
-    "url": "^0.11.0",
+    "mkdirp": "^3.0.1",
+    "url": "^0.11.4",
     "vss-web-extension-sdk": "5.141.0"
   }
 }
