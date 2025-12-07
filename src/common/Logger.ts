@@ -1,5 +1,8 @@
 import { LogLevel, ILogger } from "./Interfaces";
 
+/**
+ * Console-based logger implementation
+ */
 class ConsoleLogger implements ILogger {
     public logVerbose(message: string) {
         this._log(message, LogLevel.verbose);
@@ -35,8 +38,7 @@ class ConsoleLogger implements ILogger {
 export var logger: ILogger = new ConsoleLogger();
 
 /**
- * DO NOT CALL - This is exposed for other logger implementation
- * @param newLogger 
+ * Replace the default logger implementation (internal use only)
  */
 export function SetLogger(newLogger: ILogger) {
     logger = newLogger;

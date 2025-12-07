@@ -1,5 +1,6 @@
 import * as WITProcessDefinitionsInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessDefinitionsInterfaces";
 import * as WITProcessInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingProcessInterfaces";
+import * as WITInterfaces from "azure-devops-node-api/interfaces/WorkItemTrackingInterfaces";
 import * as vsts_NOREQUIRE from "azure-devops-node-api/WebApi";
 import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingProcessDefinitionsApi";
 import { IWorkItemTrackingProcessApi as WITProcessApi_NOREQUIRE } from "azure-devops-node-api/WorkItemTrackingProcessApi";
@@ -11,6 +12,9 @@ import { logger } from "./Logger";
 import { Engine } from "./Engine";
 import { Utility } from "./Utilities";
 
+/**
+ * Exports Azure DevOps process definitions and components
+ */
 export class ProcessExporter {
     private _vstsWebApi: vsts_NOREQUIRE.WebApi;
     private _witProcessApi: WITProcessApi_NOREQUIRE;
@@ -23,8 +27,11 @@ export class ProcessExporter {
         this._witProcessDefinitionApi = restClients.witProcessDefinitionApi;
     }
 
+    /**
+     * Get source process ID from configuration
+     */
     private async _getSourceProcessId(): Promise<string> {
-        const processes = await Utility.tryCatchWithKnownError(() => this._witProcessApi.getProcesses(),
+        const processes = await Utility.tryCatchWithKnownError(() => this._witProcessApi.getListOfProcesses(),
             () => new ExportError(`Error getting processes on source account '${this._config.sourceAccountUrl}, check account url, token and token permissions.`));
 
         if (!processes) { // most likely 404
@@ -38,16 +45,19 @@ export class ProcessExporter {
         }
 
         const process = matchProcesses[0];
-        if (process.properties.class !== WITProcessInterfaces.ProcessClass.Derived) {
-            throw new ExportError(`Proces '${this._config.sourceProcessName}' is not a derived process, not supported.`);
+        if (process.customizationType === WITProcessInterfaces.CustomizationType.System) {
+            throw new ExportError(`Process '${this._config.sourceProcessName}' is not a derived process, not supported.`);
         }
         return process.typeId;
     }
 
+    /**
+     * Extract all process components and artifacts
+     */
     private async _getComponents(processId: string): Promise<IProcessPayload> {
         let _process: WITProcessInterfaces.ProcessModel;
         let _behaviorsCollectionScope: WITProcessInterfaces.WorkItemBehavior[];
-        let _fieldsCollectionScope: WITProcessInterfaces.FieldModel[];
+        let _fieldsCollectionScope: WITInterfaces.WorkItemField[];
         const _fieldsWorkitemtypeScope: IWITypeFields[] = [];
         const _layouts: IWITLayout[] = [];
         const _states: IWITStates[] = [];
@@ -58,10 +68,10 @@ export class ProcessExporter {
         const _nonSystemWorkItemTypes: WITProcessDefinitionsInterfaces.WorkItemTypeModel[] = [];
         const processPromises: Promise<any>[] = [];
 
-        processPromises.push(this._witProcessApi.getProcessById(processId).then(process => _process = process));
-        processPromises.push(this._witProcessApi.getFields(processId).then(fields => _fieldsCollectionScope = fields));
-        processPromises.push(this._witProcessApi.getBehaviors(processId).then(behaviors => _behaviorsCollectionScope = behaviors));
-        processPromises.push(this._witProcessApi.getWorkItemTypes(processId).then(workitemtypes => {
+        processPromises.push(this._witProcessApi.getProcessByItsId(processId).then(process => _process = process));
+        processPromises.push(this._witApi.getFields().then(fields => _fieldsCollectionScope = fields));
+        processPromises.push(this._witProcessApi.getProcessBehaviors(processId).then(behaviors => _behaviorsCollectionScope = behaviors));
+        processPromises.push(this._witProcessDefinitionApi.getWorkItemTypes(processId).then(workitemtypes => {
             const perWitPromises: Promise<any>[] = [];
 
             for (const workitemtype of workitemtypes) {
@@ -88,7 +98,7 @@ export class ProcessExporter {
 
                         const picklistPromises: Promise<any>[] = [];
                         for (const field of fields) {
-                            if (field.pickList && !knownPicklists[field.referenceName]) { // Same picklist field may exist in multiple work item types but we only need to export once (At this moment the picklist is still collection-scoped)
+                            if (field.pickList && !knownPicklists[field.referenceName]) { // Export each picklist only once (may be used by multiple work item types)
                                 knownPicklists[field.pickList.id] = true;
                                 picklistPromises.push(this._witProcessDefinitionApi.getList(field.pickList.id).then(picklist => _picklists.push(
                                     {
@@ -118,7 +128,7 @@ export class ProcessExporter {
                         _states.push(witStates);
                     }));
 
-                    currentWitPromises.push(this._witProcessApi.getWorkItemTypeRules(processId, workitemtype.id).then(rules => {
+                    currentWitPromises.push(this._witProcessApi.getProcessWorkItemTypeRules(processId, workitemtype.id).then(rules => {
                         const witRules: IWITRules = {
                             workItemTypeRefName: workitemtype.id,
                             rules: rules
@@ -132,9 +142,8 @@ export class ProcessExporter {
             return Promise.all(perWitPromises);
         }));
 
-        //NOTE: it maybe out of order for per-workitemtype artifacts for different work item types 
-        //      for example, you may have Bug and then Feature for 'States' but Feature comes before Bug for 'Rules'
-        //      the order does not matter since we stamp the work item type information 
+        // NOTE: Artifacts may be returned out of order across work item types
+        // This doesn't affect functionality since each artifact includes work item type information
         await Promise.all(processPromises);
 
         const processPayload: IProcessPayload = {
@@ -153,6 +162,9 @@ export class ProcessExporter {
         return processPayload;
     }
 
+    /**
+     * Export complete process with all components
+     */
     public async exportProcess(): Promise<IProcessPayload> {
         logger.logInfo("Export process started.");
 

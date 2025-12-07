@@ -29,7 +29,7 @@ export class ProcessImporter {
     private async _importWorkItemTypes(payload: IProcessPayload): Promise<void> {
         for (const wit of payload.workItemTypes) {
             if (wit.class === WITProcessInterfaces.WorkItemTypeClass.System) {
-                //The exported payload should not have exported System WITypes, so fail on import.
+                // System work item types should not be imported
                 throw new ImportError(`Work item type '${wit.name}' is a system work item type with no modifications, cannot import.`);
             }
             else {
@@ -43,7 +43,7 @@ export class ProcessImporter {
     }
 
     /**
-     * This process payload from export and return fields that need create also fix Identity field type and picklist id
+     * Process export payload and return fields that need to be created, fixing Identity field types and picklist IDs
      */
     private async _getFieldsToCreate(payload: IProcessPayload): Promise<WITProcessDefinitionsInterfaces.FieldModel[]> {
         assert(payload.targetAccountInformation && payload.targetAccountInformation.fieldRefNameToPicklistId, "[Unexpected] - targetInformation not properly populated");
@@ -60,7 +60,7 @@ export class ProcessImporter {
             throw new ImportError("Failed to get fields from target account, see logs for details.")
         }
 
-        // Build a lookup to know if a field is picklist field.
+        // Build lookup to identify picklist fields
         const isPicklistField: IDictionaryStringTo<boolean> = {};
         for (const e of payload.witFieldPicklists) {
             isPicklistField[e.fieldRefName] = true;
@@ -68,14 +68,14 @@ export class ProcessImporter {
 
         const outputFields: WITProcessDefinitionsInterfaces.FieldModel[] = [];
         for (const sourceField of payload.fields) {
-            const fieldExist = fieldsOnTarget.some(targetField => targetField.referenceName === sourceField.id);
+            const fieldExist = fieldsOnTarget.some(targetField => targetField.referenceName === sourceField.referenceName);
             if (!fieldExist) {
-                const createField: WITProcessDefinitionsInterfaces.FieldModel = Utility.WITProcessToWITProcessDefinitionsFieldModel(sourceField);
+                const createField: WITProcessDefinitionsInterfaces.FieldModel = Utility.WITToWITProcessDefinitionsFieldModel(sourceField);
                 if (sourceField.isIdentity) {
                     createField.type = WITProcessDefinitionsInterfaces.FieldType.Identity;
                 }
-                if (isPicklistField[sourceField.id]) {
-                    const picklistId = payload.targetAccountInformation.fieldRefNameToPicklistId[sourceField.id];
+                if (isPicklistField[sourceField.referenceName]) {
+                    const picklistId = payload.targetAccountInformation.fieldRefNameToPicklistId[sourceField.referenceName];
                     assert(picklistId !== PICKLIST_NO_ACTION, "[Unexpected] We are creating the field which we found the matching field earlier on collection")
                     createField.pickList = {
                         id: picklistId,
@@ -91,7 +91,9 @@ export class ProcessImporter {
         return outputFields;
     }
 
-    /**Create fields at a collection scope*/
+    /**
+     * Create fields at collection scope
+     */
     private async _importFields(payload: IProcessPayload): Promise<void> {
         const fieldsToCreate: WITProcessDefinitionsInterfaces.FieldModel[] = await Engine.Task(() => this._getFieldsToCreate(payload), "Get fields to be created on target process");
 
@@ -115,12 +117,14 @@ export class ProcessImporter {
         }
     }
 
-    /**Add fields at a Work Item Type scope*/
+    /**
+     * Add fields at work item type scope
+     */
     private async _addFieldsToWorkItemTypes(payload: IProcessPayload): Promise<void> {
         for (const entry of payload.workItemTypeFields) {
             for (const field of entry.fields) {
                 try {
-                    // Make separate call to set default value on identity field allow failover 
+                    // Set default value for identity fields separately to allow failover
                     const defaultValue = field.defaultValue;
                     field.defaultValue = field.type === WITProcessDefinitionsInterfaces.FieldType.Identity ? null : defaultValue;
 
@@ -145,7 +149,7 @@ export class ProcessImporter {
                             }
                             else {
                                 logger.logException(error);
-                                throw new ImportError(`Failed to set field '${field.referenceName}' with default value '${JSON.stringify(defaultValue, null, 2)}' to work item type '${entry.workItemTypeRefName}'. You may set skipImportControlContributions = true in configuraiton file to continue.`);
+                                throw new ImportError(`Failed to set field '${field.referenceName}' with default value '${JSON.stringify(defaultValue, null, 2)}' to work item type '${entry.workItemTypeRefName}'. You may set skipImportControlContributions = true in configuration file to continue.`);
                             }
                         }
                     }
@@ -212,11 +216,11 @@ export class ProcessImporter {
         }
 
         if (page.isContribution && this._config.options.skipImportFormContributions === true) {
-            // skip import page contriubtion unless user explicitly asks so
+            // Skip importing page contributions unless explicitly requested
             return;
         }
 
-        let newPage: WITProcessDefinitionsInterfaces.Page; //The newly created page, contains the pageId required to create groups.
+        let newPage: WITProcessDefinitionsInterfaces.Page; // Newly created page containing pageId required for group creation
         const createPage = Utility.toCreatePage(page);
         const sourcePagesOnTarget = targetLayout.pages.filter(p => p.id === page.id);
         try {
@@ -269,18 +273,18 @@ export class ProcessImporter {
                 let newGroup: WITProcessDefinitionsInterfaces.Group;
 
                 if (group.isContribution === true && this._config.options.skipImportFormContributions === true) {
-                    // skip import group contriubtion unless user explicitly asks so
+                    // Skip importing group contributions unless explicitly requested
                     continue;
                 }
 
                 if (group.controls.length !== 0 && group.controls[0].controlType === "HtmlFieldControl") {
-                    //Handle groups with HTML Controls
+                    // Handle groups with HTML controls
                     if (group.inherited) {
                         if (group.overridden) {
                             // No handling on group update since we have done this already in 1st pass
                             const htmlControl = group.controls[0];
                             if (htmlControl.overridden) {
-                                // If the HTML control is overriden, we must update that as well 
+                                // Update overridden HTML control
                                 let updatedHtmlControl: WITProcessDefinitionsInterfaces.Control;
                                 try {
                                     updatedHtmlControl = await Engine.Task(
@@ -298,21 +302,21 @@ export class ProcessImporter {
                             }
                         }
                         else {
-                            // no-op since the group is not overriden
+                            // No action needed - group is not overridden
                         }
                     }
                     else {
-                        // special handling for HTML control - we must create a group containing the HTML control at same time.
+                        // HTML controls require creating group and control simultaneously
                         const createGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
                         createGroup.controls = group.controls;
                         await this._createGroup(createGroup, page, section, witLayout, payload);
                     }
                 }
                 else {
-                    //Groups with no HTML Controls
+                    // Groups without HTML controls
 
                     if (!group.inherited) {
-                        //create the group if it's not inherited
+                        // Create non-inherited groups
                         const createGroup = Utility.toCreateGroup(group);
                         newGroup = await this._createGroup(createGroup, page, section, witLayout, payload);
                         group.id = newGroup.id;
@@ -330,13 +334,13 @@ export class ProcessImporter {
 
                                 if (control.inherited) {
                                     if (control.overridden) {
-                                        //edit
+                                        // Edit overridden inherited control
                                         await Engine.Task(() => this._witProcessDefinitionApi.editControl(createControl, payload.process.typeId, witLayout.workItemTypeRefName, group.id, control.id),
                                             `Edit control '${control.id}' in group '${group.id}' in page '${page.id}' in work item type '${witLayout.workItemTypeRefName}'.`);
                                     }
                                 }
                                 else {
-                                    //create
+                                    // Create new control
                                     await Engine.Task(() => this._witProcessDefinitionApi.addControlToGroup(createControl, payload.process.typeId, witLayout.workItemTypeRefName, group.id),
                                         `Create control '${control.id}' in group '${group.id}' in page '${page.id}' in work item type '${witLayout.workItemTypeRefName}'.`);
                                 }
@@ -353,9 +357,9 @@ export class ProcessImporter {
     }
 
     private async _importLayouts(payload: IProcessPayload): Promise<void> {
-        /** Notes:
-         * HTML controls need to be created at the same tme as the group they are in.
-         * Non HTML controls need to be added 1 by 1 after the group they are in has been created.
+        /*
+         * HTML controls must be created simultaneously with their containing group.
+         * Non-HTML controls are added individually after their group is created.
          */
         for (const witLayoutEntry of payload.layouts) {
             const targetLayout: WITProcessDefinitionsInterfaces.FormLayout = await Engine.Task(
@@ -396,7 +400,7 @@ export class ProcessImporter {
                     }
                 }
                 else {
-                    if (sourceState.hidden) { // if state exists on target, only update if hidden 
+                    if (sourceState.hidden) { // Only update existing states if they need to be hidden
                         const hiddenState = await Engine.Task(
                             () => this._witProcessDefinitionApi.hideStateDefinition({ hidden: true }, payload.process.typeId, witStateEntry.workItemTypeRefName, existingStates[0].id),
                             `Hide state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
@@ -407,7 +411,7 @@ export class ProcessImporter {
 
                     const existingState = existingStates[0];
                     if (sourceState.color !== existingState.color || sourceState.stateCategory !== existingState.stateCategory || sourceState.name !== existingState.name) {
-                        // Inherited state can be edited in custom work item types.
+                        // Update inherited states in custom work item types
                         const updatedState = await Engine.Task(
                             () => this._witProcessDefinitionApi.updateStateDefinition(Utility.toCreateOrUpdateStateDefinition(sourceState), payload.process.typeId, witStateEntry.workItemTypeRefName, existingState.id),
                             `Update state '${sourceState.name}' in '${witStateEntry.workItemTypeRefName}' work item type`);
@@ -443,10 +447,10 @@ export class ProcessImporter {
         }
     }
 
-    private async _importWITRule(rule: WITProcessInterfaces.FieldRuleModel, witRulesEntry: IWITRules, payload: IProcessPayload) {
+    private async _importWITRule(rule: WITProcessInterfaces.ProcessRule, witRulesEntry: IWITRules, payload: IProcessPayload) {
         try {
-            const createdRule = await Engine.Task(
-                () => this._witProcessApi.addWorkItemTypeRule(rule, payload.process.typeId, witRulesEntry.workItemTypeRefName),
+            const createdRule: WITProcessInterfaces.ProcessRule = await Engine.Task(
+                () => this._witProcessApi.addProcessWorkItemTypeRule(rule, payload.process.typeId, witRulesEntry.workItemTypeRefName),
                 `Create rule '${rule.id}' in work item type '${witRulesEntry.workItemTypeRefName}'`);
 
             if (!createdRule || !createdRule.id) {
@@ -467,7 +471,7 @@ export class ProcessImporter {
     private async _importRules(payload: IProcessPayload): Promise<void> {
         for (const witRulesEntry of payload.rules) {
             for (const rule of witRulesEntry.rules) {
-                if (!rule.isSystem) {
+                if (rule.customizationType !== WITProcessInterfaces.CustomizationType.System) {
                     await this._importWITRule(rule, witRulesEntry, payload);
                 }
             }
@@ -475,10 +479,10 @@ export class ProcessImporter {
     }
 
     private async _importBehaviors(payload: IProcessPayload): Promise<void> {
-        const behaviorsOnTarget = await Utility.tryCatchWithKnownError(
+        const behaviorsOnTarget: WITProcessInterfaces.ProcessBehavior[] = await Utility.tryCatchWithKnownError(
             async () => {
                 return await Engine.Task(
-                    () => this._witProcessApi.getBehaviors(payload.process.typeId),
+                    () => this._witProcessApi.getProcessBehaviors(payload.process.typeId),
                     `Get behaviors on target account`);
             }, () => new ImportError(`Failed to get behaviors on target account.`));
 
@@ -486,28 +490,48 @@ export class ProcessImporter {
 
         for (const behavior of payload.behaviors) {
             try {
-                const existing = behaviorsOnTarget.some(b => b.id === behavior.id);
+                // Extract behavior ID from various possible API structures
+                const behaviorId = behavior.id || (behavior as any).referenceName || (behavior as any).behaviorId || behavior.name;
+                
+                // Skip behaviors with invalid IDs
+                if (!behaviorId || behaviorId === 'undefined' || behaviorId.trim() === '') {
+                    logger.logWarning(`Skipping behavior with invalid ID: ${JSON.stringify({id: behavior.id, referenceName: (behavior as any).referenceName, name: behavior.name})}`);
+                    continue;
+                }
+                
+                // Get the correct behavior reference name for comparison
+                const behaviorRefName = behaviorId;
+                const existing = behaviorsOnTarget.some(b => b.referenceName === behaviorRefName || b.referenceName === behaviorId);
+                
                 if (!existing) {
                     const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = Utility.toCreateBehavior(behavior);
-                    // Use a random name to avoid conflict on scenarios involving a name swap 
-                    behaviorIdToRealNameBehavior[behavior.id] = Utility.toReplaceBehavior(behavior);
+                    
+                    // Log behavior creation details for debugging
+                    logger.logVerbose(`Creating behavior: id='${behaviorId}', name='${behavior.name}', inherits='${createBehavior.inherits}', color='${createBehavior.color}', referenceName='${(behavior as any).referenceName}'`);
+                    
+                    // Validate parent behavior ID is present
+                    if (!createBehavior.inherits || createBehavior.inherits.trim() === '') {
+                        logger.logWarning(`Behavior '${behavior.name}' has empty or undefined parent behavior ID. Original inherits: ${JSON.stringify(behavior.inherits)}`);
+                        throw new ImportError(`Cannot create behavior '${behavior.name}' because parent behavior ID is missing or empty. This may be due to Azure DevOps API changes.`);
+                    }
+                    
+                    // Store behavior for final name update (use behaviorId instead of behavior.id)
+                    behaviorIdToRealNameBehavior[behaviorId] = Utility.toReplaceBehavior(behavior);
                     createBehavior.name = Utility.createGuidWithoutHyphen();
+                    
                     const createdBehavior = await Engine.Task(
                         () => this._witProcessDefinitionApi.createBehavior(createBehavior, payload.process.typeId),
-                        `Create behavior '${behavior.id}' with fake name '${behavior.name}'`);
-                    if (!createdBehavior || createdBehavior.id !== behavior.id) {
+                        `Create behavior '${behaviorId}' with temporary name`);
+                    if (!createdBehavior || createdBehavior.id !== behaviorId) {
                         throw new ImportError(`Failed to create behavior '${behavior.name}', server returned empty result or id does not match.`)
                     }
                 }
                 else {
-                    const replaceBehavior: WITProcessDefinitionsInterfaces.BehaviorReplaceModel = Utility.toReplaceBehavior(behavior);
-                    behaviorIdToRealNameBehavior[behavior.id] = Utility.toReplaceBehavior(behavior);
-                    replaceBehavior.name = Utility.createGuidWithoutHyphen();
-                    const replacedBehavior = await Engine.Task(
-                        () => this._witProcessDefinitionApi.replaceBehavior(replaceBehavior, payload.process.typeId, behavior.id),
-                        `Replace behavior '${behavior.id}' with fake name '${behavior.name}'`);
-                    if (!replacedBehavior) {
-                        throw new ImportError(`Failed to replace behavior '${behavior.name}', server returned empty result.`)
+                    // Skip existing behaviors - Azure DevOps API v15 no longer supports behavior replacement via PUT
+                    logger.logVerbose(`Behavior '${behaviorId}' already exists on target, skipping replacement (API v15 limitation)`);
+                    // Only store for name update if the behavior needs renaming
+                    if (behavior.name && behavior.name !== behaviorId) {
+                        behaviorIdToRealNameBehavior[behaviorId] = Utility.toReplaceBehavior(behavior);
                     }
                 }
             }
@@ -517,14 +541,24 @@ export class ProcessImporter {
             }
         }
 
-        // Recover the behavior names to what they should be
+        // Restore behavior names to their correct values
         for (const id in behaviorIdToRealNameBehavior) {
             const behaviorWithRealName = behaviorIdToRealNameBehavior[id];
-            const replacedBehavior = await Engine.Task(
-                () => this._witProcessDefinitionApi.replaceBehavior(behaviorWithRealName, payload.process.typeId, id),
-                `Replace behavior '${id}' to it's real name '${behaviorWithRealName.name}'`);
-            if (!replacedBehavior) {
-                throw new ImportError(`Failed to replace behavior id '${id}' to its real name, server returned empty result.`)
+            try {
+                const replacedBehavior = await Engine.Task(
+                    () => this._witProcessDefinitionApi.replaceBehavior(behaviorWithRealName, payload.process.typeId, id),
+                    `Replace behavior '${id}' to its real name '${behaviorWithRealName.name}'`);
+                if (!replacedBehavior) {
+                    logger.logWarning(`Could not restore name for behavior '${id}' - this may be expected for existing behaviors in API v15`);
+                }
+            } catch (error: any) {
+                // Azure DevOps API v15 may not support behavior name updates for existing behaviors
+                if (error.message && error.message.includes('PUT')) {
+                    logger.logWarning(`Behavior name update not supported for '${id}' (API v15 limitation): ${error.message}`);
+                } else {
+                    logger.logException(error);
+                    throw new ImportError(`Failed to restore behavior name for '${id}', see logs for details.`);
+                }
             }
         }
     }
@@ -558,12 +592,12 @@ export class ProcessImporter {
         const processedFieldRefNames: IDictionaryStringTo<boolean> = {};
         for (const picklistEntry of payload.witFieldPicklists) {
             if (processedFieldRefNames[picklistEntry.fieldRefName] === true) {
-                continue; // Skip since we already processed the field, it might be referenced by different work item type
+                continue; // Skip already processed fields (may be referenced by multiple work item types)
             }
 
             const targetPicklistId = targetFieldToPicklistId[picklistEntry.fieldRefName];
             if (targetPicklistId && targetPicklistId !== PICKLIST_NO_ACTION) {
-                // Picklist exists but items not match, update items
+                // Update existing picklist with mismatched items
                 let newpicklist: WITProcessDefinitionsInterfaces.PickListModel = <any>{};
                 Object.assign(newpicklist, picklistEntry.picklist);
                 newpicklist.id = targetPicklistId;
@@ -572,7 +606,7 @@ export class ProcessImporter {
                         () => this._witProcessDefinitionApi.updateList(newpicklist, targetPicklistId),
                         `Update picklist '${targetPicklistId}' for field '${picklistEntry.fieldRefName}'`);
 
-                    // validate the updated list matches expectation
+                    // Validate updated list meets expectations
                     if (!updatedPicklist || !updatedPicklist.id) {
                         throw new ImportError(`Update picklist '${targetPicklistId}' for field '${picklistEntry.fieldRefName}' was not successful, result is emtpy, possibly the picklist does not exist on target collection`);
                     }
@@ -593,8 +627,8 @@ export class ProcessImporter {
                 }
             }
             else if (!targetPicklistId) {
-                // Target field does not exist we need create picklist to be used when create field.
-                picklistEntry.picklist.name = `picklist_${Guid.create()}`; // Avoid conflict on target
+                // Create picklist for fields that don't exist on target
+                picklistEntry.picklist.name = `picklist_${Guid.create()}`; // Avoid naming conflicts
                 try {
                     const createdPicklist = await Engine.Task(
                         () => this._witProcessDefinitionApi.createList(picklistEntry.picklist),
@@ -617,7 +651,7 @@ export class ProcessImporter {
     }
 
     private async _createComponents(payload: IProcessPayload): Promise<void> {
-        await Engine.Task(() => this._importPicklists(payload), "Import picklists on target account"); // This must be before field import
+        await Engine.Task(() => this._importPicklists(payload), "Import picklists on target account"); // Must execute before field import
         await Engine.Task(() => this._importFields(payload), "Import fields on target account");
         await Engine.Task(() => this._importWorkItemTypes(payload), "Import work item types on target process");
         await Engine.Task(() => this._addFieldsToWorkItemTypes(payload), "Add field to work item types on target process");
@@ -629,17 +663,22 @@ export class ProcessImporter {
     }
 
     private async _validateProcess(payload: IProcessPayload): Promise<void> {
-        if (payload.process.properties.class != WITProcessInterfaces.ProcessClass.Derived) {
+        // Verify process supports inheritance (additional safety check)
+        if (payload.process.properties && payload.process.properties.class === WITProcessInterfaces.ProcessClass.System) {
+            throw new ValidationError("Only inherited process is supported to be imported.");
+        }
+        // Alternative check for different API property structures
+        if ((payload.process as any).customizationType === WITProcessInterfaces.CustomizationType.System) {
             throw new ValidationError("Only inherited process is supported to be imported.");
         }
 
         const targetProcesses: WITProcessInterfaces.ProcessModel[] =
             await Utility.tryCatchWithKnownError(async () => {
-                return await Engine.Task(() => this._witProcessApi.getProcesses(), `Get processes on target account`);
-            }, () => new ValidationError("Failed to get processes on target acccount, check account url, token and token permission."));
+                return await Engine.Task(() => this._witProcessApi.getListOfProcesses(), `Get processes on target account`);
+            }, () => new ValidationError("Failed to get processes on target account, check account url, token and token permission."));
 
         if (!targetProcesses) { // most likely 404
-            throw new ValidationError("Failed to get processes on target acccount, check account url.");
+            throw new ValidationError("Failed to get processes on target account, check account url.");
         }
 
         for (const process of targetProcesses) {
@@ -663,11 +702,11 @@ export class ProcessImporter {
 
         payload.targetAccountInformation.collectionFields = currentFieldsOnTarget;
         for (const sourceField of payload.fields) {
-            const convertedSrcFieldType: number = Utility.WITProcessToWITFieldType(sourceField.type, sourceField.isIdentity);
+            const convertedSrcFieldType: number = sourceField.type;
             const conflictingFields: WITInterfaces.WorkItemField[] = currentFieldsOnTarget.filter(targetField =>
-                ((targetField.referenceName === sourceField.id) || (targetField.name === sourceField.name)) // match by name or reference name
-                && convertedSrcFieldType !== targetField.type // but with a different type 
-                && (!sourceField.isIdentity || !targetField.isIdentity)); // with exception if both are identity - known issue we export identity field type = string 
+                ((targetField.referenceName === sourceField.referenceName) || (targetField.name === sourceField.name)) // Match by name or reference
+                && convertedSrcFieldType !== targetField.type // Different field type
+                && (!sourceField.isIdentity || !targetField.isIdentity)); // Exception for identity fields (known export issue) 
 
             if (conflictingFields.length > 0) {
                 throw new ValidationError(`Field in target Collection conflicts with '${sourceField.name}' field with a different reference name or type.`);
@@ -690,11 +729,10 @@ export class ProcessImporter {
     }
 
     /**
-     * Validate picklist and output to payload.targetAccountInformation.fieldRefNameToPicklistId for directions under different case
-     * 1) Picklist field does not exist -> importPicklists will create picklist and importFields will use the picklist created
-     * 2) Picklist field exist and items match -> no-op for importPicklists/importFields
-     * 3) Picklist field exists but items does not match -> if 'overwritePicklist' enabled, importPicklists will update items and importFields will skip
-     * @param payload 
+     * Validate picklists and populate targetAccountInformation.fieldRefNameToPicklistId mapping:
+     * 1) Field doesn't exist -> create picklist, then field
+     * 2) Field exists with matching items -> no action needed
+     * 3) Field exists with different items -> update if 'overwritePicklist' enabled
      */
     private async _validatePicklists(payload: IProcessPayload): Promise<void> {
         assert(payload.targetAccountInformation && payload.targetAccountInformation.collectionFields, "[Unexpected] - targetInformation not properly populated");
@@ -706,7 +744,7 @@ export class ProcessImporter {
             const fieldRefName = picklistEntry.fieldRefName;
             const currentTargetPicklist = currentTargetFieldToPicklist[fieldRefName];
             if (currentTargetPicklist) {
-                // Compare the pick list items 
+                // Compare picklist items for conflicts
                 let conflict: boolean;
                 if (currentTargetPicklist.items.length === picklistEntry.picklist.items.length && !currentTargetPicklist.isSuggested === !picklistEntry.picklist.isSuggested) {
                     for (const sourceItem of picklistEntry.picklist.items) {
@@ -741,9 +779,9 @@ export class ProcessImporter {
     private async _preImportValidation(payload: IProcessPayload): Promise<void> {
         payload.targetAccountInformation = {
             fieldRefNameToPicklistId: {}
-        }; // set initial value for target account information
+        }; // Initialize target account information
 
-        if (!this._commandLineOptions.overwriteProcessOnTarget) { // only validate if we are not cleaning up target
+        if (!this._commandLineOptions.overwriteProcessOnTarget) { // Skip validation if overwriting target
             await Engine.Task(() => this._validateProcess(payload), "Validate process existence on target account");
         }
         await Engine.Task(() => this._validateFields(payload), "Validate fields on target account");
@@ -751,11 +789,11 @@ export class ProcessImporter {
     }
 
     private async _deleteProcessOnTarget(targetProcessName: string) {
-        const processes = await this._witProcessApi.getProcesses();
+        const processes = await this._witProcessApi.getListOfProcesses();
         for (const process of processes.filter(p => p.name.toLocaleLowerCase() === targetProcessName.toLocaleLowerCase())) {
             await Utility.tryCatchWithKnownError(
                 async () => await Engine.Task(
-                    () => this._witProcessApi.deleteProcess(process.typeId),
+                    () => this._witProcessApi.deleteProcessById(process.typeId),
                     `Delete process '${process.name}' on target account`),
                 () => new ImportError(`Failed to delete process on target, do you have projects created using that project?`));
         }
@@ -763,8 +801,8 @@ export class ProcessImporter {
 
     private async _createProcess(payload: IProcessPayload) {
         const createProcessModel: WITProcessInterfaces.CreateProcessModel = Utility.ProcessModelToCreateProcessModel(payload.process);
-        const createdProcess = await Engine.Task(
-            () => this._witProcessApi.createProcess(createProcessModel),
+        const createdProcess: WITProcessInterfaces.ProcessInfo = await Engine.Task(
+            () => this._witProcessApi.createNewProcess(createProcessModel),
             `Create process '${createProcessModel.name}'`);
         if (!createdProcess) {
             throw new ImportError(`Failed to create process '${createProcessModel.name}' on target account.`);

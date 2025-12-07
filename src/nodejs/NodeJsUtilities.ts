@@ -9,8 +9,14 @@ import { logger } from "../common/Logger";
 import { Utility } from "../common/Utilities";
 import { KnownError } from "../common/Errors";
 
+/**
+ * Node.js-specific utility functions extending base Utility class
+ */
 export class NodeJsUtility extends Utility {
 
+    /**
+     * Write JSON object to file with directory creation
+     */
     public static async writeJsonToFile(exportFilename: string, payload: Object) {
         const folder = dirname(exportFilename);
         if (!existsSync(folder)) {
@@ -19,6 +25,9 @@ export class NodeJsUtility extends Utility {
         await writeFileSync(exportFilename, JSON.stringify(payload, null, 2), { flag: "w" });
     }
 
+    /**
+     * Start keyboard listener for user cancellation (press 'q' to quit)
+     */
     public static startCancellationListener() {
         const stdin = process.stdin;
         if (typeof stdin.setRawMode !== "function") {
@@ -31,10 +40,16 @@ export class NodeJsUtility extends Utility {
         logger.logVerbose("Keyboard listener added");
     }
 
+    /**
+     * Get log file path from configuration options
+     */
     public static getLogFilePath(options: IConfigurationOptions): string {
         return options.logFilename ? options.logFilename : normalize(defaultLogFileName);
     }
 
+    /**
+     * Create Azure DevOps REST API clients with authentication
+     */
     public static async getRestClients(accountUrl: string, PAT: string): Promise<IRestClients> {
         const authHandler = vsts.getPersonalAccessTokenHandler(PAT);
         const vstsWebApi = new vsts.WebApi(accountUrl, authHandler);

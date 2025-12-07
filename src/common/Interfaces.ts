@@ -5,6 +5,9 @@ import { IWorkItemTrackingProcessDefinitionsApi as WITProcessDefinitionApi } fro
 import { IWorkItemTrackingProcessApi as WITProcessApi } from "azure-devops-node-api/WorkItemTrackingProcessApi";
 import { IWorkItemTrackingApi as WITApi } from "azure-devops-node-api/WorkItemTrackingApi";
 
+/**
+ * Logging levels for console and file output
+ */
 export enum LogLevel {
     error,
     warning,
@@ -12,6 +15,9 @@ export enum LogLevel {
     verbose
 }
 
+/**
+ * Operation modes for the process migration tool
+ */
 export enum Modes {
     import,
     export,
@@ -30,6 +36,9 @@ export interface ICommandLineOptions {
     targetToken?: string;
 }
 
+/**
+ * Configuration file structure for process migration
+ */
 export interface IConfigurationFile {
     sourceProcessName?: string;
     targetProcessName?: string;
@@ -40,6 +49,9 @@ export interface IConfigurationFile {
     options?: IConfigurationOptions;
 }
 
+/**
+ * Optional configuration settings
+ */
 export interface IConfigurationOptions {
     logLevel?: string;
     logFilename?: string;
@@ -48,12 +60,19 @@ export interface IConfigurationOptions {
     continueOnRuleImportFailure?: boolean;
     continueOnIdentityDefaultValueFailure?: boolean;
     skipImportFormContributions?: boolean;
+    // Network retry options
+    maxRetries?: number;
+    retryBaseDelayMs?: number;
+    enableRetries?: boolean;
 }
 
+/**
+ * Complete process definition including all components and artifacts
+ */
 export interface IProcessPayload {
     process: WITProcessInterfaces.ProcessModel;
     workItemTypes: WITProcessDefinitionsInterfaces.WorkItemTypeModel[];
-    fields: WITProcessInterfaces.FieldModel[];
+    fields: WITInterfaces.WorkItemField[];
     workItemTypeFields: IWITypeFields[];
     witFieldPicklists: IWITFieldPicklist[];
     layouts: IWITLayout[];
@@ -91,7 +110,7 @@ export interface IWITStates {
 
 export interface IWITRules {
     workItemTypeRefName: string;
-    rules: WITProcessInterfaces.FieldRuleModel[];
+    rules: WITProcessInterfaces.ProcessRule[];
 }
 
 export interface IWITBehaviors {
