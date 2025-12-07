@@ -12,16 +12,19 @@ import { ProcessImporter } from "../common/ProcessImporter";
 import { Engine } from "../common/Engine";
 import { NodeJsUtility } from "./NodeJsUtilities";
 
+/**
+ * Main entry point for process migration tool
+ */
 async function main() {
     const startTime = Date.now();
 
-    // Parse command line
+    // Parse command line arguments
     const commandLineOptions = ProcesCommandLine();
 
-    // Read configuration file 
+    // Load and process configuration
     const configuration = await ProcessConfigurationFile(commandLineOptions)
 
-    // Overwrite token if specified on command line 
+    // Override tokens from command line if provided
     if (commandLineOptions.sourceToken) {
         configuration.sourceAccountToken = commandLineOptions.sourceToken;
     }
@@ -30,11 +33,14 @@ async function main() {
         configuration.targetAccountToken = commandLineOptions.targetToken;
     }
 
-    // Initialize logger
+    // Setup logging and configuration
     const maxLogLevel = configuration.options.logLevel ? LogLevel[configuration.options.logLevel] : LogLevel.information;
     const logFile = NodeJsUtility.getLogFilePath(configuration.options);
     InitializeFileLogger(logFile, maxLogLevel);
     logger.logInfo(`Full log is sent to '${resolve(logFile)}' `)
+
+    // Configure Engine with retry settings
+    Engine.setConfiguration(configuration);
 
     // Enable user cancellation
     NodeJsUtility.startCancellationListener();
@@ -42,7 +48,7 @@ async function main() {
     const mode = commandLineOptions.mode;
     const userOptions = configuration.options as IConfigurationOptions;
     try {
-        // Export
+        // Execute export phase if needed
         let processPayload: IProcessPayload;
         if (mode === Modes.export || mode === Modes.migrate) {
             const sourceRestClients = await Engine.Task(() => NodeJsUtility.getRestClients(configuration.sourceAccountUrl, configuration.sourceAccountToken), `Get rest client on source account '${configuration.sourceAccountUrl}'`);
@@ -54,9 +60,9 @@ async function main() {
             logger.logInfo(`Export process completed successfully to '${resolve(exportFilename)}'.`);
         }
 
-        // Import 
+        // Execute import phase if needed
         if (mode === Modes.import || mode == Modes.migrate) {
-            if (mode === Modes.import) { // Read payload from file instead
+            if (mode === Modes.import) { // Load payload from file for import-only mode
                 const processFileName = (configuration.options && configuration.options.processFilename) || normalize(defaultProcessFilename);
                 if (!existsSync(processFileName)) {
                     throw new ImportError(`Process payload file '${processFileName}' does not exist.`)
@@ -73,12 +79,12 @@ async function main() {
     }
     catch (error) {
         if (error instanceof KnownError) {
-            // Known errors, just log error message
+            // Expected errors - log message only
             logger.logError(error.message);
         }
         else {
             logger.logException(error);
-            logger.logError(`Encountered unkonwn error, check log file for details.`)
+            logger.logError(`Encountered unknown error, check log file for details.`)
         }
         process.exit(1);
     }

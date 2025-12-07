@@ -2,12 +2,15 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { normalize } from "path";
 import * as minimist from "minimist";
 import * as url from "url";
-import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramSourceToken, paramTargetToken } from "../common/Constants";
+import { defaultConfiguration, defaultConfigurationFilename, defaultEncoding, paramConfig, paramMode, paramSourceToken, paramTargetToken, paramOverwriteProcessOnTarget } from "../common/Constants";
 import { IConfigurationFile, LogLevel, Modes, ICommandLineOptions } from "../common/Interfaces";
 import { logger } from "../common/Logger";
 import { Utility } from "../common/Utilities";
 import { parse as jsoncParse } from "jsonc-parser";
 
+/**
+ * Parse command line arguments and return options
+ */
 export function ProcesCommandLine(): ICommandLineOptions {
     const parseOptions: minimist.Opts = {
         boolean: true,
@@ -46,10 +49,14 @@ export function ProcesCommandLine(): ICommandLineOptions {
     ret[paramConfig] = configFileName;
     ret[paramSourceToken] = parsedArgs[paramSourceToken];
     ret[paramTargetToken] = parsedArgs[paramTargetToken];
+    ret[paramOverwriteProcessOnTarget] = parsedArgs[paramOverwriteProcessOnTarget] || false;
 
     return <ICommandLineOptions>ret;
 }
 
+/**
+ * Load and validate configuration file
+ */
 export async function ProcessConfigurationFile(commandLineOptions: ICommandLineOptions): Promise<IConfigurationFile> {
     // Load configuration file
     const configFile = commandLineOptions.config;
@@ -65,7 +72,7 @@ export async function ProcessConfigurationFile(commandLineOptions: ICommandLineO
 
     const configuration = jsoncParse(readFileSync(configFile, defaultEncoding)) as IConfigurationFile;
 
-    // replace token if overriden from command line
+    // Override tokens from command line if specified
     configuration.sourceAccountToken = commandLineOptions.sourceToken ? commandLineOptions.sourceToken : configuration.sourceAccountToken;
     configuration.targetAccountToken = commandLineOptions.targetToken ? commandLineOptions.targetToken : configuration.targetAccountToken;
 

@@ -4,13 +4,12 @@ import * as WITProcessInterfaces from "azure-devops-node-api/interfaces/WorkItem
 import { KnownError } from "./Errors";
 import { logger } from "./Logger";
 import { Modes, IConfigurationFile, LogLevel, ICommandLineOptions } from "./Interfaces";
-import * as url from "url";
 import { Guid } from "guid-typescript";
 import { regexRemoveHypen } from "./Constants";
 
 export class Utility {
-    /** Convert from WITProcess FieldModel to WITProcessDefinitions FieldModel
-     * @param fieldModel 
+    /**
+     * Convert WITProcess FieldModel to WITProcessDefinitions FieldModel
      */
     public static WITProcessToWITProcessDefinitionsFieldModel(fieldModel: WITProcessInterfaces.FieldModel): WITProcessDefinitionsInterfaces.FieldModel {
 
@@ -25,8 +24,8 @@ export class Utility {
         return outField;
     }
 
-    /** Convert from WIT WorkItemField to WITProcessDefinitions FieldModel
-     * @param workItemField 
+    /**
+     * Convert WIT WorkItemField to WITProcessDefinitions FieldModel
      */
     public static WITToWITProcessDefinitionsFieldModel(workItemField: WITInterfaces.WorkItemField): WITProcessDefinitionsInterfaces.FieldModel {
 
@@ -41,8 +40,8 @@ export class Utility {
         return outField;
     }
 
-    /** Convert from WorkItemTracking FieldType to WorkItemTrackingProcessDefinitions FieldType
-     * @param witFieldType 
+    /**
+     * Convert WorkItemTracking FieldType to WorkItemTrackingProcessDefinitions FieldType
      */
     public static WITToWITProcessDefinitionsFieldType(witFieldType: WITInterfaces.FieldType, fieldIsIdentity: boolean): WITProcessDefinitionsInterfaces.FieldType {
         if (fieldIsIdentity) { return WITProcessDefinitionsInterfaces.FieldType.Identity; }
@@ -66,8 +65,8 @@ export class Utility {
         }
     }
 
-    /** Convert from WorkItemTrackingProcess FieldType to WorkItemTracking FieldType
-     * @param witProcessFieldType 
+    /**
+     * Convert WorkItemTrackingProcess FieldType to WorkItemTracking FieldType
      */
     public static WITProcessToWITFieldType(witProcessFieldType: number, fieldIsIdentity: boolean): number {
         if (fieldIsIdentity) { return WITInterfaces.FieldType.Identity; }
@@ -91,22 +90,37 @@ export class Utility {
         }
     }
 
-    /**Convert process from ProcessModel to CreateProcessModel
-     * @param processModel
-    */
+    /**
+     * Convert ProcessModel to CreateProcessModel
+     */
     public static ProcessModelToCreateProcessModel(processModel: WITProcessInterfaces.ProcessModel): WITProcessInterfaces.CreateProcessModel {
+        // Try to get parentProcessTypeId from different possible locations due to API changes
+        let parentProcessTypeId: string | undefined;
+        
+        if (processModel.properties && processModel.properties.parentProcessTypeId) {
+            parentProcessTypeId = processModel.properties.parentProcessTypeId;
+        } else if ((processModel as any).parentProcessTypeId) {
+            parentProcessTypeId = (processModel as any).parentProcessTypeId;
+        } else if ((processModel as any).parentTypeId) {
+            parentProcessTypeId = (processModel as any).parentTypeId;
+        }
+        
+        if (!parentProcessTypeId) {
+            throw new Error(`Unable to determine parent process type ID for process '${processModel.name}'. This may be due to Azure DevOps API changes.`);
+        }
+
         const createModel: WITProcessInterfaces.CreateProcessModel = {
             description: processModel.description,
             name: processModel.name,
-            parentProcessTypeId: processModel.properties.parentProcessTypeId,
+            parentProcessTypeId: parentProcessTypeId,
             referenceName: Utility.createGuidWithoutHyphen() // Reference name does not really matter since we already have typeId
         };
         return createModel;
     }
 
-    /**Convert group from getLayout group interface to WITProcessDefinitionsInterfaces.Group
-     * @param group
-    */
+    /**
+     * Convert layout group to WITProcessDefinitions Group
+     */
     public static toCreateGroup(group: WITProcessDefinitionsInterfaces.Group): WITProcessDefinitionsInterfaces.Group {
         let createGroup: WITProcessDefinitionsInterfaces.Group = {
             id: group.id,
@@ -123,9 +137,9 @@ export class Utility {
         return createGroup;
     }
 
-    /**Convert control from getLayout control interface to WITProcessDefinitionsInterfaces.Control
-     * @param control
-    */
+    /**
+     * Convert layout control to WITProcessDefinitions Control
+     */
     public static toCreateControl(control: WITProcessDefinitionsInterfaces.Control): WITProcessDefinitionsInterfaces.Control {
         let createControl: WITProcessDefinitionsInterfaces.Control = {
             id: control.id,
@@ -145,8 +159,8 @@ export class Utility {
         return createControl;
     }
 
-    /**Convert page from getLayout page interface to WITProcessDefinitionsInterfaces.Page
-      * @param control
+    /**
+     * Convert layout page to WITProcessDefinitions Page
      */
     public static toCreatePage(page: WITProcessDefinitionsInterfaces.Page): WITProcessDefinitionsInterfaces.Page {
         let createPage: WITProcessDefinitionsInterfaces.Page = {
@@ -165,9 +179,9 @@ export class Utility {
         return createPage;
     }
 
-    /**Convert a state result to state input
-    * @param group
-    */
+    /**
+     * Convert state result model to state input model
+     */
     public static toCreateOrUpdateStateDefinition(state: WITProcessInterfaces.WorkItemStateResultModel): WITProcessDefinitionsInterfaces.WorkItemStateInputModel {
         const updateState: WITProcessDefinitionsInterfaces.WorkItemStateInputModel = {
             color: state.color,
@@ -178,17 +192,97 @@ export class Utility {
         return updateState;
     }
 
+    /**
+     * Convert WorkItemBehavior to BehaviorCreateModel with Azure DevOps API compatibility fixes
+     */
     public static toCreateBehavior(behavior: WITProcessInterfaces.WorkItemBehavior): WITProcessDefinitionsInterfaces.BehaviorCreateModel {
+        // Extract parent behavior ID from various API property structures
+        let inheritsId: string | undefined;
+        
+        if (behavior.inherits && behavior.inherits.id) {
+            inheritsId = behavior.inherits.id;
+        } else if (behavior.inherits && (behavior.inherits as any).behaviorRefName) {
+            // New API structure: inherits.behaviorRefName
+            inheritsId = (behavior.inherits as any).behaviorRefName;
+        } else if ((behavior as any).inheritsId) {
+            inheritsId = (behavior as any).inheritsId;
+        } else if ((behavior as any).parentId) {
+            inheritsId = (behavior as any).parentId;
+        }
+        
+        // Apply behavior-specific parent overrides for API validation
+        const behaviorRefName = (behavior as any).referenceName || '';
+        
+        // Force correct parent for known problematic behaviors
+        if (behaviorRefName === 'System.RequirementBacklogBehavior') {
+            inheritsId = 'System.PortfolioBacklogBehavior';
+        }
+        
+        // Determine parent behavior when not explicitly set
+        if (!inheritsId) {
+            const behaviorName = behavior.name ? behavior.name.toLowerCase() : '';
+            const behaviorRefName = (behavior as any).referenceName || '';
+            
+            // Requirement behaviors must inherit from portfolio behaviors
+            if (behaviorRefName === 'System.RequirementBacklogBehavior' || 
+                (behaviorName === 'stories' && behaviorRefName.includes('Requirement'))) {
+                inheritsId = 'System.PortfolioBacklogBehavior';
+            }
+            // Portfolio-level behaviors (Features, Epics)
+            else if (behaviorName.includes('portfolio') || 
+                     behaviorName.includes('epic') || 
+                     behaviorName.includes('feature') ||
+                     behaviorRefName.includes('Portfolio')) {
+                inheritsId = 'System.PortfolioBacklogBehavior';
+            }
+            // Requirement-level behaviors (User Stories, Product Backlog Items)
+            else if (behaviorName.includes('user story') || 
+                     behaviorName.includes('product backlog') ||
+                     behaviorName.includes('requirement') ||
+                     behaviorRefName.includes('RequirementBacklog')) {
+                inheritsId = 'System.RequirementBacklogBehavior';
+            }
+            // Task-level behaviors (Tasks, Bugs, Issues)
+            else if (behaviorName.includes('task') || 
+                     behaviorName.includes('bug') ||
+                     behaviorName.includes('issue') ||
+                     behaviorRefName.includes('Task')) {
+                inheritsId = 'System.TaskBacklogBehavior';
+            }
+            // Default fallback for unknown behaviors
+            else {
+                inheritsId = 'System.BacklogBehavior';
+            }
+        }
+
+        // Extract behavior ID from various API property structures
+        let behaviorId = behavior.id;
+        if (!behaviorId || behaviorId === 'undefined' || behaviorId.trim() === '') {
+            // Try alternative property names for behavior ID
+            behaviorId = (behavior as any).referenceName || 
+                        (behavior as any).behaviorId || 
+                        (behavior as any).refName ||
+                        behavior.name; // Use name as fallback
+        }
+        
+        // Final validation - ensure we have a valid behavior ID
+        if (!behaviorId || behaviorId === 'undefined' || behaviorId.trim() === '') {
+            throw new Error(`Cannot create behavior '${behavior.name}' - no valid ID found. API structure may have changed.`);
+        }
+
         const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = {
             color: behavior.color,
-            inherits: behavior.inherits.id,
+            inherits: inheritsId,
             name: behavior.name
         };
-        // TODO: Move post S135 when generated model has id. 
-        (<any>createBehavior).id = behavior.id;
+        // TODO: Remove when generated model includes id property
+        (<any>createBehavior).id = behaviorId;
         return createBehavior;
     }
 
+    /**
+     * Convert WorkItemBehavior to BehaviorReplaceModel
+     */
     public static toReplaceBehavior(behavior: WITProcessInterfaces.WorkItemBehavior): WITProcessDefinitionsInterfaces.BehaviorReplaceModel {
         const replaceBehavior: WITProcessDefinitionsInterfaces.BehaviorReplaceModel = {
             color: behavior.color,
@@ -197,11 +291,31 @@ export class Utility {
         return replaceBehavior;
     }
 
+    /**
+     * Validates if a string is a valid URL with a host
+     * @param urlString The URL string to validate
+     * @returns true if the URL is valid and has a host, false otherwise
+     */
+    public static isValidUrl(urlString: string): boolean {
+        try {
+            const url = new URL(urlString);
+            return !!url.host;
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Handle known errors by re-throwing, otherwise log exception
+     */
     public static handleKnownError(error: any) {
         if (error instanceof KnownError) { throw error; }
         logger.logException(error);
     }
 
+    /**
+     * Execute action with known error handling
+     */
     public static async tryCatchWithKnownError<T>(action: () => Promise<T> | T, thrower: () => Error): Promise<T> {
         try {
             return await action();
@@ -212,9 +326,12 @@ export class Utility {
         }
     }
 
+    /**
+     * Validate configuration file settings for the specified mode
+     */
     public static validateConfiguration(configuration: IConfigurationFile, mode: Modes): boolean {
         if (mode === Modes.export || mode === Modes.migrate) {
-            if (!configuration.sourceAccountUrl || !url.parse(configuration.sourceAccountUrl).host) {
+            if (!configuration.sourceAccountUrl || !Utility.isValidUrl(configuration.sourceAccountUrl)) {
                 logger.logError(`[Configuration validation] Missing or invalid source account url: '${configuration.sourceAccountUrl}'.`);
                 return false;
             }
@@ -229,7 +346,7 @@ export class Utility {
         }
 
         if (mode === Modes.import || mode === Modes.migrate) {
-            if (!configuration.targetAccountUrl || !url.parse(configuration.targetAccountUrl).host) {
+            if (!configuration.targetAccountUrl || !Utility.isValidUrl(configuration.targetAccountUrl)) {
                 logger.logError(`[Configuration validation] Missing or invalid target account url: '${configuration.targetAccountUrl}'.`);
                 return false;
             }
@@ -260,15 +377,85 @@ export class Utility {
             return false;
         }
 
+        // Validate retry configuration
+        if (configuration.options && configuration.options.enableRetries !== undefined && (configuration.options.enableRetries !== true && configuration.options.enableRetries !== false)) {
+            logger.logError(`[Configuration validation] Option 'enableRetries' is not a valid boolean.`);
+            return false;
+        }
+        if (configuration.options && configuration.options.maxRetries !== undefined && (typeof configuration.options.maxRetries !== 'number' || configuration.options.maxRetries < 0 || configuration.options.maxRetries > 10)) {
+            logger.logError(`[Configuration validation] Option 'maxRetries' must be a number between 0 and 10.`);
+            return false;
+        }
+        if (configuration.options && configuration.options.retryBaseDelayMs !== undefined && (typeof configuration.options.retryBaseDelayMs !== 'number' || configuration.options.retryBaseDelayMs < 100 || configuration.options.retryBaseDelayMs > 30000)) {
+            logger.logError(`[Configuration validation] Option 'retryBaseDelayMs' must be a number between 100 and 30000 milliseconds.`);
+            return false;
+        }
+
         return true;
     }
 
+    /**
+     * Check if user has cancelled the operation
+     */
     public static didUserCancel(): boolean {
         return Utility.isCancelled;
     }
 
+    /**
+     * Generate GUID string without hyphens
+     */
     public static createGuidWithoutHyphen(): string {
         return Guid.create().toString().replace(regexRemoveHypen, "");
+    }
+
+    /**
+     * Executes a function with retry logic for network timeout errors
+     * @param fn The function to execute
+     * @param maxRetries Maximum number of retries (default: 3)
+     * @param baseDelayMs Base delay in milliseconds between retries (default: 1000)
+     * @param operation Description of the operation for logging
+     * @returns Promise resolving to the function result
+     */
+    public static async executeWithRetry<T>(
+        fn: () => Promise<T>, 
+        maxRetries: number = 3, 
+        baseDelayMs: number = 1000,
+        operation: string = "operation"
+    ): Promise<T> {
+        let lastError: any;
+        
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                return await fn();
+            } catch (error: any) {
+                lastError = error;
+                
+                // Check if this is a network timeout error that we should retry
+                const isTimeoutError = error && (
+                    error.code === 'ETIMEDOUT' ||
+                    error.code === 'ECONNRESET' ||
+                    error.code === 'ECONNREFUSED' ||
+                    (error.message && error.message.includes('ETIMEDOUT')) ||
+                    (error.name === 'AggregateError' && error.message && error.message.includes('ETIMEDOUT'))
+                );
+                
+                // If not a timeout error or we've exhausted retries, throw the error
+                if (!isTimeoutError || attempt === maxRetries) {
+                    throw error;
+                }
+                
+                // Calculate delay with exponential backoff and jitter
+                const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 1000;
+                
+                logger.logWarning(`${operation} failed with timeout error (attempt ${attempt + 1}/${maxRetries + 1}). Retrying in ${Math.round(delay)}ms...`);
+                logger.logVerbose(`Timeout error details: ${error.message || error}`);
+                
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+        
+        throw lastError;
     }
 
     protected static isCancelled = false;

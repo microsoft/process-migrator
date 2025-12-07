@@ -4,6 +4,9 @@ import { appendFileSync, existsSync, unlinkSync, mkdirSync } from "fs";
 import { dirname } from "path";
 import { sync as mkdirpSync } from "mkdirp";
 
+/**
+ * File-based logger with console output filtering
+ */
 export class FileLogger implements ILogger {
     constructor(private _logFilename: string, private _maxLogLevel: LogLevel) {
         if (existsSync(_logFilename)) {
@@ -46,6 +49,9 @@ export class FileLogger implements ILogger {
     }
 }
 
+/**
+ * Initialize file logger and set as default logger
+ */
 export function InitializeFileLogger(logFilename: string, maxLogLevel: LogLevel) {
     const folder = dirname(logFilename);
     if (!existsSync(folder)) {
