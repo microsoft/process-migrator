@@ -196,6 +196,11 @@ export class ProcessImporter {
                 `edit group '${group.id}' in page '${page.id}'`);
         }
         catch (error) {
+            if (this._isExistingInheritedGroupConflict(error, group)) {
+                logger.logInfo(`Skipped inherited group already present on target after VS403113: ${witLayout.workItemTypeRefName} / ${page.id} / ${group.id} / ${group.label}`);
+                return group;
+            }
+
             logger.logException(error);
             throw new ImportError(`Failed to edit group '${group.id}' in page '${page.id}', see logs for details.`)
         }
@@ -204,6 +209,93 @@ export class ProcessImporter {
             throw new ImportError(`Failed to create group '${group.id}' in page '${page.id}', server returned empty result or id.`)
         }
         return newGroup;
+    }
+
+    private _findTargetPage(
+        targetLayout: WITProcessDefinitionsInterfaces.FormLayout,
+        sourcePage: WITProcessDefinitionsInterfaces.Page,
+        importedPage: WITProcessDefinitionsInterfaces.Page
+    ): WITProcessDefinitionsInterfaces.Page {
+        if (!targetLayout || !targetLayout.pages) {
+            return null;
+        }
+
+        const pageIds = [sourcePage && sourcePage.id, importedPage && importedPage.id].filter(id => !!id);
+        for (const page of targetLayout.pages) {
+            if (pageIds.some(id => page.id === id)) {
+                return page;
+            }
+        }
+
+        if (sourcePage && sourcePage.label) {
+            for (const page of targetLayout.pages) {
+                if (page.label === sourcePage.label) {
+                    return page;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private _getTargetGroupMatch(
+        targetPage: WITProcessDefinitionsInterfaces.Page,
+        sourceGroup: WITProcessDefinitionsInterfaces.Group
+    ): { byId: boolean, byLabel: boolean, group: WITProcessDefinitionsInterfaces.Group } {
+        let match = {
+            byId: false,
+            byLabel: false,
+            group: null
+        };
+
+        if (!targetPage || !targetPage.sections) {
+            return match;
+        }
+
+        for (const targetSection of targetPage.sections) {
+            if (!targetSection.groups) {
+                continue;
+            }
+
+            for (const targetGroup of targetSection.groups) {
+                const byId = targetGroup.id === sourceGroup.id;
+                const byLabel = !!sourceGroup.label && targetGroup.label === sourceGroup.label;
+                if (byId || byLabel) {
+                    match.byId = match.byId || byId;
+                    match.byLabel = match.byLabel || byLabel;
+                    match.group = match.group || targetGroup;
+                }
+            }
+        }
+
+        return match;
+    }
+
+    private _hasCustomControlsToAdd(group: WITProcessDefinitionsInterfaces.Group): boolean {
+        if (!group.controls) {
+            return false;
+        }
+
+        return group.controls.some(control => !control.inherited);
+    }
+
+    private _isPureInheritedStandardGroup(group: WITProcessDefinitionsInterfaces.Group): boolean {
+        return group.inherited === true
+            && group.isContribution !== true
+            && !this._hasCustomControlsToAdd(group);
+    }
+
+    private _isExistingInheritedGroupConflict(error: any, group: WITProcessDefinitionsInterfaces.Group): boolean {
+        if (!this._isPureInheritedStandardGroup(group)) {
+            return false;
+        }
+
+        const message = error && error.message ? error.message : JSON.stringify(error);
+        return message
+            && message.indexOf("VS403113") >= 0
+            && message.indexOf("A group with label") >= 0
+            && message.indexOf(group.label) >= 0
+            && message.indexOf("already exists") >= 0;
     }
 
     private async _importPage(targetLayout: WITProcessDefinitionsInterfaces.FormLayout, witLayout: IWITLayout, page: WITProcessDefinitionsInterfaces.Page, payload: IProcessPayload) {
@@ -234,9 +326,13 @@ export class ProcessImporter {
             throw new ImportError(`Failed to create or edit '${page.id}' page in ${witLayout.workItemTypeRefName}, server returned empty result.`);
         }
 
+        const updatedTargetLayout: WITProcessDefinitionsInterfaces.FormLayout = await Engine.Task(
+            () => this._witProcessDefinitionApi.getFormLayout(payload.process.typeId, witLayout.workItemTypeRefName),
+            `Refresh layout on target process for work item type '${witLayout.workItemTypeRefName}' after page import`);
+        const targetPage = this._findTargetPage(updatedTargetLayout, page, newPage);
         page.id = newPage.id;
         // First pass - process inherited groups first (in case a custom group uses inherited group name causing conflict)
-        await this._importInheritedGroups(witLayout, page, payload);
+        await this._importInheritedGroups(witLayout, page, targetPage, payload);
 
         // Second pass - process custom groups and controls 
         await this._importOtherGroupsAndControls(witLayout, page, payload);
@@ -245,12 +341,23 @@ export class ProcessImporter {
     private async _importInheritedGroups(
         witLayout: IWITLayout,
         page: WITProcessDefinitionsInterfaces.Page,
+        targetPage: WITProcessDefinitionsInterfaces.Page,
         payload: IProcessPayload
     ) {
         logger.logVerbose(`Start import inherited group changes`);
         for (const section of page.sections) {
             for (const group of section.groups) {
                 if (group.inherited && group.overridden) {
+                    const match = this._getTargetGroupMatch(targetPage, group);
+                    const hasCustomControls = this._hasCustomControlsToAdd(group);
+                    const skip = this._isPureInheritedStandardGroup(group) && (match.byId || match.byLabel);
+                    logger.logVerbose(`Inherited group import decision: ${witLayout.workItemTypeRefName} / ${page.id} / ${group.id} / ${group.label} / inherited=${group.inherited} / isContribution=${group.isContribution} / hasCustomControls=${hasCustomControls} / targetMatchById=${match.byId} / targetMatchByLabel=${match.byLabel} / decision=${skip ? "skip" : "edit"}`);
+
+                    if (skip) {
+                        logger.logInfo(`Skipped inherited group already present on target: ${witLayout.workItemTypeRefName} / ${page.id} / ${group.id} / ${group.label}`);
+                        continue;
+                    }
+
                     const updatedGroup: WITProcessDefinitionsInterfaces.Group = Utility.toCreateGroup(group);
                     await this._editGroup(updatedGroup, page, section, group, witLayout, payload);
                 }
