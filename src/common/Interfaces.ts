@@ -51,13 +51,13 @@ export interface IConfigurationOptions {
 }
 
 export interface IProcessPayload {
-    process: WITProcessInterfaces.ProcessModel;
+    process: WITProcessInterfaces.ProcessInfo;
     workItemTypes: WITProcessDefinitionsInterfaces.WorkItemTypeModel[];
     fields: WITProcessInterfaces.FieldModel[];
     workItemTypeFields: IWITypeFields[];
     witFieldPicklists: IWITFieldPicklist[];
     layouts: IWITLayout[];
-    behaviors: WITProcessInterfaces.WorkItemBehavior[];
+    behaviors: WITProcessInterfaces.ProcessBehavior[];
     workItemTypeBehaviors: IWITBehaviors[];
     states: IWITStates[];
     rules: IWITRules[];
@@ -91,7 +91,7 @@ export interface IWITStates {
 
 export interface IWITRules {
     workItemTypeRefName: string;
-    rules: WITProcessInterfaces.FieldRuleModel[];
+    rules: WITProcessInterfaces.ProcessRule[];
 }
 
 export interface IWITBehaviors {

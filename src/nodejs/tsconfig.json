@@ -2,19 +2,19 @@
   "compilerOptions": {
     "noImplicitAny": false,
     "noImplicitThis": true,
-    "lib": ["es6", "dom", "es2015.iterable"],
+    "lib": ["es2020", "dom"],
     "outDir": "../../build/nodejs",
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,
-    "target": "es2017", // to not transpile async/await, 
+    "target": "es2020",
     "module": "commonjs",
     "moduleResolution": "node",
-    "skipLibCheck": true, // to allow requirejs live together with node
+    "skipLibCheck": true
   },
   "include": [
     "**/*.ts",
-    "../common/**/*.ts",
+    "../common/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -22,6 +22,15 @@ export class ValidationError extends KnownError {
     }
 }
 
+export class AggregateValidationError extends KnownError {
+    public readonly errors: string[];
+    constructor(errors: string[]) {
+        const formatted = errors.map((e, i) => `  ${i + 1}) ${e}`).join("\n");
+        super(`Process import validation failed with ${errors.length} error(s):\n${formatted}`);
+        this.errors = errors;
+    }
+}
+
 export class ImportError extends KnownError {
     constructor(message: string) {
         super(`Import failed, see log file for details. ${message}`);

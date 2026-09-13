@@ -50,14 +50,14 @@ export class Utility {
         }
     }
 
-    /**Convert process from ProcessModel to CreateProcessModel
-     * @param processModel
+    /**Convert process from ProcessInfo to CreateProcessModel
+     * @param processInfo
     */
-    public static ProcessModelToCreateProcessModel(processModel: WITProcessInterfaces.ProcessModel): WITProcessInterfaces.CreateProcessModel {
+    public static ProcessModelToCreateProcessModel(processInfo: WITProcessInterfaces.ProcessInfo): WITProcessInterfaces.CreateProcessModel {
         const createModel: WITProcessInterfaces.CreateProcessModel = {
-            description: processModel.description,
-            name: processModel.name,
-            parentProcessTypeId: processModel.properties.parentProcessTypeId,
+            description: processInfo.description,
+            name: processInfo.name,
+            parentProcessTypeId: processInfo.parentProcessTypeId,
             referenceName: Utility.createGuidWithoutHyphen() // Reference name does not really matter since we already have typeId
         };
         return createModel;
@@ -137,18 +137,18 @@ export class Utility {
         return updateState;
     }
 
-    public static toCreateBehavior(behavior: WITProcessInterfaces.WorkItemBehavior): WITProcessDefinitionsInterfaces.BehaviorCreateModel {
+    public static toCreateBehavior(behavior: WITProcessInterfaces.ProcessBehavior): WITProcessDefinitionsInterfaces.BehaviorCreateModel {
         const createBehavior: WITProcessDefinitionsInterfaces.BehaviorCreateModel = {
             color: behavior.color,
-            inherits: behavior.inherits.id,
+            inherits: behavior.inherits ? behavior.inherits.behaviorRefName : undefined,
             name: behavior.name
         };
-        // TODO: Move post S135 when generated model has id. 
-        (<any>createBehavior).id = behavior.id;
+        // Set id on the create model so the behavior gets the correct reference name
+        (<any>createBehavior).id = behavior.referenceName;
         return createBehavior;
     }
 
-    public static toReplaceBehavior(behavior: WITProcessInterfaces.WorkItemBehavior): WITProcessDefinitionsInterfaces.BehaviorReplaceModel {
+    public static toReplaceBehavior(behavior: WITProcessInterfaces.ProcessBehavior): WITProcessDefinitionsInterfaces.BehaviorReplaceModel {
         const replaceBehavior: WITProcessDefinitionsInterfaces.BehaviorReplaceModel = {
             color: behavior.color,
             name: behavior.name

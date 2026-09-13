@@ -1,74 +1,119 @@
 # Azure DevOps Process Migrator for Node.js
 
-**NOTE:** When running the process migrator on Node.js v23.10+ you will get the below error:
+This application provides you the ability to automate the [Process](https://docs.microsoft.com/en-us/vsts/work/customize/process/manage-process?view=vsts) export/import across Azure DevOps organizations through a Node.js CLI.
 
-> C:\Users***\AppData\Roaming\npm\node_modules\process-migrator\build\nodejs\nodejs\NodeJsUtilities.js:23
-> if (!util_1.isFunction(stdin.setRawMode)) {
-> ^
-> TypeError: util_1.isFunction is not a function
+**NOTE:** This only works with 'Inherited Process'. For 'XML process' you may upload/download the process as a ZIP.
 
-We are working on resolving this (see issues #107, #108).
+## Repository Status
 
-This application provide you ability to automate the [Process](https://docs.microsoft.com/en-us/vsts/work/customize/process/manage-process?view=vsts) export/import across VSTS accounts through Node.js CLI.
+This fork includes the upstream SDK/toolchain modernization (TypeScript 5 + `azure-devops-node-api` v17) and keeps usage/configuration guidance in this README aligned with this repository.
 
-**NOTE:** This only works with 'Inherited Process', for 'XML process' you may upload/download process as ZIP. 
- 
-# Getting Started
+## Requirements
 
-## Run
+- **Node.js 20 LTS or later** (Node 22/24 are also supported)
+- **npm 9+** (bundled with Node 20+)
+- An Azure DevOps organization using **Inherited process model**
 
-To run this tool you must have both NodeJS and NPM installed. They are available as a single package and instructions are below.
+## Getting Started
 
-- Install Node from https://nodejs.org/en/download/ or https://nodejs.org/en/download/package-manager/
-- Install this package through `npm install process-migrator -g` 
-- Create and fill required information in config file *configuration.json*. See [document section](#documentation) for details
+### Run from source (recommended)
 
-   Just run ```process-migrator``` without any argument will create the file if it does not exist.
+```bash
+git clone https://github.com/DownAtTheBottomOfTheMoleHole/process-migrator.git
+cd process-migrator
+npm install
+npm run build
+node build/nodejs/nodejs/Main.js [--mode=<migrate|import|export>] [--config=<path>]
+```
 
-   ##### ![](https://imgplaceholder.com/100x17/cccccc/fe2904?text=WARNING&font-size=15) CONFIGURATION FILE HAS PAT, RIGHT PROTECT IT !
-- Run `process-migrator [--mode=<migrate(default)/import/export>] [--config=<your-configuration-file-path>]`
-  
+### Environment-variable based credentials (recommended)
+
+Never put PATs directly in `configuration.json` if possible. Instead, pass them on the command line using `--sourceToken` / `--targetToken`:
+
+```bash
+node build/nodejs/nodejs/Main.js \
+  --mode=migrate \
+  --config=configuration.json \
+  --sourceToken="$AZDO_SOURCE_TOKEN" \
+  --targetToken="$AZDO_TARGET_TOKEN"
+```
+
+Or store them in a secrets manager and inject at runtime. The `configuration.json` file itself is plain JSONC — no environment variable substitution is performed.
+
+### Install globally from GitHub
+
+```bash
+npm install -g github:DownAtTheBottomOfTheMoleHole/process-migrator
+process-migrator [--mode=<migrate|import|export>] [--config=<path>]
+```
+
 ## Contribute
 
-- From the root of source, run `npm install`
-- Build by `npm run build`
-- Execute through `node build\nodejs\nodejs\Main.js <args>`
+```bash
+npm install
+npm run build
+node build/nodejs/nodejs/Main.js <args>
+```
 
 ## Documentation
 
-##### Command line parameters
-- --mode: Optional, default as 'migrate'. Mode of the execution, can be 'migrate' (export and then import), 'export' (export only) or 'import' (import only).
-- --config: Optional, default as './configuration.json'. Specify the configuration file.
+### Command line parameters
 
-##### Configuration file structure
-- This file is in [JSONC](https://github.com/Microsoft/node-jsonc-parser) format, you don't have to remove comments lines for it to work. 
-- The AccountUrl for the source and target is the root URL to the organization. Example: https://dev.azure.com/MyOrgName.
-- The Personal Access Token (PAT) for both the source and target must have the Work Items 'Read, Write, & Manage' permission scope.
+- `--mode`: Optional, default `migrate`. Execution mode: `migrate` (export then import), `export`, or `import`.
+- `--config`: Optional, default `./configuration.json`. Path to the configuration file.
+- `--sourceToken`: Optional, override source PAT from command line.
+- `--targetToken`: Optional, override target PAT from command line.
+- `--overwriteProcessOnTarget`: Optional flag. Delete the process on target before import if it already exists.
 
-``` json
+### Required PAT scopes
+
+| PAT | Minimum required scope |
+|-----|----------------------|
+| Source account | **Work Items** → Read |
+| Target account | **Work Items** → Read, Write & Manage |
+
+Both tokens also require **Processes** read/write access if your Azure DevOps version requires it separately.
+
+### Configuration file structure
+
+This file is in [JSONC](https://github.com/Microsoft/node-jsonc-parser) format (comments allowed).
+The `AccountUrl` is the root URL to the organization, e.g. `https://dev.azure.com/MyOrgName`.
+
+```json
 {
-    "sourceAccountUrl": "Source account url. Required in export/migrate mode, ignored in import mode.",
-    "sourceAccountToken": "!!TREAT AS PASSWORD!! In Azure DevOps click on user settings personal access tokens an generate a token for source account. Required in export/migrate mode, ignored in import mode.",
-    "targetAccountUrl": "Target account url. Required in import/migrate mode, ignored in export mode.",
-    "targetAccountToken": "!!TREAT AS PASSWORD!! In Azure DevOps click on user settings personal access tokens and generate a token for target account. Required in import/migrate mode, ignored in export mode.",
-    "sourceProcessName": "Source process name to export. Required in export/migrate mode, ignored in import mode.",
-    "targetProcessName": "Optional. Set to override process name in import/migrate mode.",
+    "sourceAccountUrl": "Source account URL. Required in export/migrate mode.",
+    "sourceAccountToken": "PAT for source account. Required in export/migrate mode.",
+    "targetAccountUrl": "Target account URL. Required in import/migrate mode.",
+    "targetAccountToken": "PAT for target account. Required in import/migrate mode.",
+    "sourceProcessName": "Source process name to export. Required in export/migrate mode.",
+    "targetProcessName": "Optional. Override process name on import/migrate.",
     "options": {
-        "processFilename": "Optional File with process payload. Required in import mode, optional for export/migrate mode.",
-        "logLevel":"log level for console. Possible values are 'verbose'/'information'/'warning'/'error' or null.",
-        "logFilename":"Optional, file name for log. defaulted to 'output/processMigrator.log'.",
-        "overwritePicklist": "Optional, default to 'false'. Set as true to overwrite picklist if exists on target or import will fail when picklist entries varies across source and target.",
-        "continueOnRuleImportFailure": "Optional, default to 'false', set true to continue import on failure importing rules, warning will be provided.",
-        "skipImportFormContributions": "Optional, default to 'false', set true to skip import control contributions on work item form.",
+        "processFilename": "Optional. File with process payload. Required in import mode.",
+        "logLevel": "Verbosity: 'verbose'/'information'/'warning'/'error'",
+        "logFilename": "Optional log file path. Defaults to 'output/processMigrator.log'.",
+        "overwritePicklist": "Optional, default false. Overwrite picklist if it already exists on target.",
+        "continueOnRuleImportFailure": "Optional, default false. Continue import on rule failures.",
+        "continueOnIdentityDefaultValueFailure": "Optional, default false. Continue on identity default value failures.",
+        "skipImportFormContributions": "Optional, default false. Skip importing form control contributions."
     }
 }
 ```
 
-##### Notes 
-- If extensions used by source account are not available in target account, import MAY fail
-   1) Control/Group/Page contributions on work item form are by default imported, so it will fail if the extension is not available on target account. use 'skipImportFormContributions' option to skip importing custom controls.
-- If identities used in field default value or rules are not available in target account, import WILL fail
-   1) For rules you may use 'continueOnRuleImportFailure' option to proceed with rest of import when such error is occurred.
-   2) For identity field default value, you may use 'continueOnFieldDefaultValueFailure' option to proceed with rest of import when such error is occurred.
-- Personal Access Token (PAT) needs to allow "Read, write, & manage" access for the "Work Items" scope
-   1) The tool needs to be able to modify the definition of work items and work item types (to add custom fields for example).
+### Notes
+
+- If extensions used in the source account are not available in the target account, import **may** fail.
+  Use `skipImportFormContributions: true` to skip custom form control contributions.
+- If identities used in field default values or rules are not available in the target account, import **will** fail.
+  Use `continueOnRuleImportFailure: true` or `continueOnIdentityDefaultValueFailure: true` to proceed past such failures.
+
+### API / SDK changes (v17 upgrade)
+
+This project now uses `azure-devops-node-api` v17. Key behavioral differences from the legacy v6 SDK:
+
+| Area | Change |
+|------|--------|
+| Process list | `ProcessInfo[]` returned (was `ProcessModel[]`); `customizationType` field replaces `properties.class` |
+| Behaviors | `ProcessBehavior[]` returned; `referenceName` field is the behavior ID (was `id`) |
+| Rules | `ProcessRule[]` returned; `name` field is the rule name (was `friendlyName`) |
+| Work item types | Retrieved via `WorkItemTrackingProcessDefinitionsApi.getWorkItemTypes()` (same types) |
+| Process fields | Derived from per-WIT field queries (v17 SDK removed the process-level field list endpoint) |
